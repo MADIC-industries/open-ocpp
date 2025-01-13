@@ -152,7 +152,9 @@ bool StatusManager::updateConnectorStatus(unsigned int                          
         std::lock_guard<std::mutex> lock(connector->mutex);
 
         // Check if status has changed
-        if (connector->status != status)
+        if (connector->status != status || connector->error_code != error_code ||
+            connector->info != info || connector->vendor_id != vendor_id ||
+            connector->vendor_error != vendor_error)
         {
             LOG_INFO << "Connector " << connector_id << " : " << ChargePointStatusHelper.toString(status);
 
@@ -193,6 +195,39 @@ bool StatusManager::updateConnectorStatus(unsigned int                          
     }
 
     return ret;
+}
+
+void StatusManager::updateConnector(unsigned int connector_id)
+{
+    // Get selected connector
+    Connector* connector = m_connectors.getConnector(connector_id);
+    if (connector)
+    {
+        ChargePointStatus status = ChargePointStatus::Unavailable;
+        ocpp::types::ocpp16::ChargePointErrorCode error_code = ocpp::types::ocpp16::ChargePointErrorCode::NoError;
+        std::string info = "";
+        std::string vendor_id = "";
+        std::string vendor_error = "";
+
+        std::tie(status, error_code, info, vendor_id, vendor_error) = m_events_handler.getConnectorStatus(connector_id);
+        std::lock_guard<std::mutex> lock(connector->mutex);
+
+        // Check if status has changed
+        if (connector->status != status || connector->error_code != error_code ||
+            connector->info != info || connector->vendor_id != vendor_id || connector->vendor_error != vendor_error)
+        {
+            LOG_INFO << "Connector " << connector_id << " : " << ChargePointStatusHelper.toString(status);
+
+            // Save new status
+            connector->status           = status;
+            connector->status_timestamp = DateTime::now();
+            connector->error_code       = error_code;
+            connector->info             = info;
+            connector->vendor_id        = vendor_id;
+            connector->vendor_error     = vendor_error;
+            m_connectors.saveConnector(connector->id);
+        }
+    }
 }
 
 /** @copydoc void IStatusManager::resetHeartBeatTimer() */
@@ -373,10 +408,16 @@ bool StatusManager::handleMessage(const ocpp::messages::ocpp16::ChangeAvailabili
         {
             // Update status
             ChargePointStatus status = ChargePointStatus::Unavailable;
+            ocpp::types::ocpp16::ChargePointErrorCode error_code = ocpp::types::ocpp16::ChargePointErrorCode::NoError;
+            std::string info = "";
+            std::string vendor_id = "";
+            std::string vendor_error = "";
+
             if (request.type == AvailabilityType::Operative)
             {
                 status = ChargePointStatus::Available;
             }
+            std::tie(status, error_code, info, vendor_id, vendor_error) = m_events_handler.getConnectorStatus(connector_id);
 
             // Update Connector Availability
             Connector* connector = m_connectors.getConnector(connector_id);
@@ -392,12 +433,12 @@ bool StatusManager::handleMessage(const ocpp::messages::ocpp16::ChangeAvailabili
             {
                 for (unsigned int i = 0; i <= m_connectors.getCount(); i++)
                 {
-                    m_worker_pool.run<void>([this, i, status] { updateConnectorStatus(i, status); });
+                    m_worker_pool.run<void>([this, i, status, error_code, info, vendor_id, vendor_error] { updateConnectorStatus(i, status, error_code, info, vendor_id, vendor_error); });
                 }
             }
             else
             {
-                m_worker_pool.run<void>([this, connector_id, status] { updateConnectorStatus(connector_id, status); });
+                m_worker_pool.run<void>([this, connector_id, status, error_code, info, vendor_id, vendor_error] { updateConnectorStatus(connector_id, status, error_code, info, vendor_id, vendor_error); });
             }
         }
 
@@ -516,6 +557,8 @@ void StatusManager::heartBeatProcess()
 /** @brief Status notification process */
 void StatusManager::statusNotificationProcess(unsigned int connector_id)
 {
+    // Check synchrononicity
+    updateConnector(connector_id);
     // Get connector
     Connector* connector = m_connectors.getConnector(connector_id);
     if (connector)

@@ -79,6 +79,13 @@ class IChargePointEventsHandler
                                                                                 ocpp::types::ocpp16::AvailabilityType availability) = 0;
 
     /**
+     * @brief Called when a connector status will be use to ensure synchronicity between stack and application
+     * @param connector_id Id of the concerned connector (0 = whole charge point)
+     * @return Status of the connector
+     */
+    virtual std::tuple<ocpp::types::ocpp16::ChargePointStatus, ocpp::types::ocpp16::ChargePointErrorCode, std::string, std::string, std::string> getConnectorStatus(unsigned int connector_id) = 0;
+
+    /**
      * @brief Called to retrieve the meter value in Wh for a connector at the start or at the end of a transaction
      * @param connector_id Id of the concerned connector
      * @return Meter value in Wh for the connector

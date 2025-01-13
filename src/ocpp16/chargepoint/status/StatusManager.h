@@ -99,6 +99,13 @@ class StatusManager : public IStatusManager,
                                const std::string&                        vendor_id    = "",
                                const std::string&                        vendor_error = "") override;
 
+    /**
+     * @brief Update the status of a connector
+     *
+     * @param connector_id Id of the connector
+     */
+    void updateConnector(unsigned int connector_id);
+
     /** @copydoc void IStatusManager::resetHeartBeatTimer() */
     void resetHeartBeatTimer() override;
 
