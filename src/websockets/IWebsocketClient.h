@@ -46,6 +46,7 @@ class IWebsocketClient
      * @param connect_timeout Connection timeout
      * @param retry_interval Retry interval when connection cannot be established (0 = no retry)
      * @param ping_interval Interval between 2 websocket PING messages when the socket is idle
+     * @param iface Network interface used to bind the socket
      * @return true if the connexion process has been started, false otherwise
      */
     virtual bool connect(const std::string&        url,
@@ -53,7 +54,8 @@ class IWebsocketClient
                          const Credentials&        credentials,
                          std::chrono::milliseconds connect_timeout = std::chrono::seconds(5),
                          std::chrono::milliseconds retry_interval  = std::chrono::seconds(5),
-                         std::chrono::milliseconds ping_interval   = std::chrono::seconds(5)) = 0;
+                         std::chrono::milliseconds ping_interval   = std::chrono::seconds(5),
+                         const std::string&        iface           = std::string()) = 0;
 
     /**
      * @brief Disconnect the client

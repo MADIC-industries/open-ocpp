@@ -88,13 +88,14 @@ LibWebsocketClient::~LibWebsocketClient()
 }
 
 /** @copydoc bool IWebsocketClient::connect(const std::string&, const std::string&, const Credentials&,
- *                                          std::chrono::milliseconds, std::chrono::milliseconds, std::chrono::milliseconds) */
+ *                                          std::chrono::milliseconds, std::chrono::milliseconds, std::chrono::milliseconds, const std::string&) */
 bool LibWebsocketClient::connect(const std::string&        url,
                                  const std::string&        protocol,
                                  const Credentials&        credentials,
                                  std::chrono::milliseconds connect_timeout,
                                  std::chrono::milliseconds retry_interval,
-                                 std::chrono::milliseconds ping_interval)
+                                 std::chrono::milliseconds ping_interval,
+                                 const std::string&        iface)
 {
     bool ret = false;
 
@@ -103,6 +104,7 @@ bool LibWebsocketClient::connect(const std::string&        url,
     {
         // Check URL
         m_url = url;
+        m_iface = iface;
         if (m_url.isValid() && ((m_url.protocol() == "ws") || (m_url.protocol() == "wss")))
         {
             // Define callback
@@ -123,6 +125,11 @@ bool LibWebsocketClient::connect(const std::string&        url,
             info.timeout_secs = static_cast<unsigned int>(std::chrono::duration_cast<std::chrono::seconds>(connect_timeout).count());
             info.connect_timeout_secs =
                 static_cast<unsigned int>(std::chrono::duration_cast<std::chrono::seconds>(connect_timeout).count());
+            if (not m_iface.empty())
+            {
+                info.iface = m_iface.c_str();
+            }
+
             info.log_cx   = &m_logs_context;
             m_credentials = credentials;
             if (m_url.protocol() == "wss")
@@ -358,6 +365,10 @@ void LibWebsocketClient::connectCallback(struct lws_sorted_usec_list* sul) noexc
     i.context = client->m_context;
     i.address = client->m_url.address().c_str();
     i.path    = client->m_url.path().c_str();
+    if (not client->m_iface.empty())
+    {
+        i.iface   = client->m_iface.c_str();
+    }
     if (client->m_credentials.server_name.empty())
     {
         i.host = i.address;

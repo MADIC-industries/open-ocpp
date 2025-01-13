@@ -85,6 +85,8 @@ class ChargePointConfigStub : public IChargePointConfig
     /** @brief Skip server name check in certificates for TLS connections
      *         (Warning : enabling this feature is not recommended in production) */
     bool tlsSkipServerNameCheck() const override { return getBool("TlsSkipServerNameCheck"); }
+    /** @brief Specify the network interface used to bind socket */
+    std::string iface() const override { return getString("Iface"); }
 
     // Charge point identification
 

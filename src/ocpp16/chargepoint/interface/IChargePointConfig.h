@@ -79,6 +79,8 @@ class IChargePointConfig
     /** @brief Skip server name check in certificates for TLS connections
      *         (Warning : enabling this feature is not recommended in production) */
     virtual bool tlsSkipServerNameCheck() const = 0;
+    /** @brief Specific network interface to use to bind socket */
+    virtual std::string iface() const = 0;
 
     // Charge point identification
 
