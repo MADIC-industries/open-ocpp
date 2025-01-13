@@ -115,6 +115,8 @@ void StatusManager::updateConnectionStatus(bool is_connected)
                 }
             }
 
+            // Process fisrt heartBeat and in case of reconnection
+            heartBeatProcess();
             // Restart heartbeat process
             m_heartbeat_timer.start(m_ocpp_config.heartbeatInterval());
         }
