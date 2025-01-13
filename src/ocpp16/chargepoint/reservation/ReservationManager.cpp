@@ -234,7 +234,6 @@ bool ReservationManager::handleMessage(const ocpp::messages::ocpp16::ReserveNowR
                     m_worker_pool.run<void>(
                         [this, connector]
                         {
-                            m_status_manager.updateConnectorStatus(connector->id, ChargePointStatus::Reserved);
                             m_events_handler.reservationStarted(connector->id);
                         });
 
@@ -333,9 +332,6 @@ void ReservationManager::endReservation(unsigned int connector_id, bool canceled
 {
     // Reset reservation data
     clearReservation(connector_id);
-
-    // Update connector state
-    m_status_manager.updateConnectorStatus(connector_id, ChargePointStatus::Available);
 
     // Notify end of reservation
     m_events_handler.reservationEnded(connector_id, canceled);
