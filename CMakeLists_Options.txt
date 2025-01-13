@@ -38,6 +38,9 @@ option(INSTALL_DOCTEST              "Install doctest headers"                   
 # Define Install Rapid Json headers
 option(INSTALL_RAPID_JSON           "Install headers of rapidjson"                                          ON)
 
+# Define JSON Path
+set(JSON_SCHEMAS_INSTALL_PATH       "include"    CACHE PATH "Path where json schema are installed from prefix")
+
 # Use only the CrtAllocator in Rapidjson, not the MemoryPoolAllocator
 option(USE_CRT_ALLOC_FOR_RAPIDJSON  "Use the CrtAllocator for Rapidjson instead of the MemoryPoolAllocator" OFF)
 if(USE_CRT_ALLOC_FOR_RAPIDJSON)
