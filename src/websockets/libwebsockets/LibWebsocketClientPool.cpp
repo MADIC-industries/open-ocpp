@@ -280,13 +280,15 @@ LibWebsocketClientPool::Client::~Client()
 }
 
 /** @copydoc bool IWebsocketClient::connect(const std::string&, const std::string&, const Credentials&,
- *                                          std::chrono::milliseconds, std::chrono::milliseconds, std::chrono::milliseconds) */
+ *                                          std::chrono::milliseconds, std::chrono::milliseconds,
+ *                                          std::chrono::milliseconds, const std::string&) */
 bool LibWebsocketClientPool::Client::connect(const std::string&        url,
                                              const std::string&        protocol,
                                              const Credentials&        credentials,
                                              std::chrono::milliseconds connect_timeout,
                                              std::chrono::milliseconds retry_interval,
-                                             std::chrono::milliseconds ping_interval)
+                                             std::chrono::milliseconds ping_interval,
+                                             const std::string&        iface)
 {
     bool ret = false;
 
@@ -302,6 +304,7 @@ bool LibWebsocketClientPool::Client::connect(const std::string&        url,
             // Save connection parameters
             m_protocol        = protocol;
             m_credentials     = credentials;
+            m_iface           = iface;
             m_connect_timeout = static_cast<unsigned int>(std::chrono::duration_cast<std::chrono::seconds>(connect_timeout).count());
             m_retry_interval  = static_cast<uint32_t>(retry_interval.count());
             m_ping_interval   = static_cast<uint16_t>(std::chrono::duration_cast<std::chrono::seconds>(ping_interval).count());

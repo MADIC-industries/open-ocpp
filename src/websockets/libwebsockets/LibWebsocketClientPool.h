@@ -101,7 +101,8 @@ class LibWebsocketClientPool
                      const Credentials&        credentials,
                      std::chrono::milliseconds connect_timeout = std::chrono::seconds(5),
                      std::chrono::milliseconds retry_interval  = std::chrono::seconds(5),
-                     std::chrono::milliseconds ping_interval   = std::chrono::seconds(5)) override;
+                     std::chrono::milliseconds ping_interval   = std::chrono::seconds(5),
+                     const std::string&        iface           = std::string()) override;
 
         /** @copydoc bool IWebsocketClient::disconnect() */
         bool disconnect() override;
@@ -175,6 +176,8 @@ class LibWebsocketClientPool
         bool m_disconnect_process_in_progress;
         /** @brief Indicate that the disconnect process is done */
         bool m_disconnect_process_done;
+        /** @brief Indicate the specific network interface to use to bind socket */
+        std::string m_iface;
 
         /** @brief Websocket context */
         struct lws_context* m_context;

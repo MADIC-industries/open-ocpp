@@ -46,7 +46,8 @@ bool RpcClient::start(const std::string&                                     url
                       const ocpp::websockets::IWebsocketClient::Credentials& credentials,
                       std::chrono::milliseconds                              connect_timeout,
                       std::chrono::milliseconds                              retry_interval,
-                      std::chrono::milliseconds                              ping_interval)
+                      std::chrono::milliseconds                              ping_interval,
+                      const std::string&                                     iface)
 {
     bool ret = false;
 
@@ -54,7 +55,7 @@ bool RpcClient::start(const std::string&                                     url
     if (!m_started && m_listener && rpcListener())
     {
         // Connect to websocket
-        ret = m_websocket.connect(url, m_protocol, credentials, connect_timeout, retry_interval, ping_interval);
+        ret = m_websocket.connect(url, m_protocol, credentials, connect_timeout, retry_interval, ping_interval, iface);
         if (ret)
         {
             // Start processing

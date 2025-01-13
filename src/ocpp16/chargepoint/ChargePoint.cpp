@@ -1224,7 +1224,8 @@ bool ChargePoint::doConnect()
                                credentials,
                                m_stack_config.connectionTimeout(),
                                m_stack_config.retryInterval(),
-                               m_ocpp_config.webSocketPingInterval());
+                               m_ocpp_config.webSocketPingInterval(),
+                               m_stack_config.iface());
 }
 
 /**

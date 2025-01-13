@@ -49,13 +49,15 @@ class RpcClient : public RpcBase, public ocpp::websockets::IWebsocketClient::ILi
      * @param connect_timeout Connection timeout in ms
      * @param retry_interval Retry interval in ms when connection cannot be established (0 = no retry)
      * @param ping_interval Interval between 2 websocket PING messages when the socket is idle
+     * @param iface Network interface used to bind the socket
      * @return true if the client has been started, false otherwise
      */
     bool start(const std::string&                                     url,
                const ocpp::websockets::IWebsocketClient::Credentials& credentials,
                std::chrono::milliseconds                              connect_timeout = std::chrono::seconds(5),
                std::chrono::milliseconds                              retry_interval  = std::chrono::seconds(5),
-               std::chrono::milliseconds                              ping_interval   = std::chrono::seconds(5));
+               std::chrono::milliseconds                              ping_interval   = std::chrono::seconds(5),
+               const std::string&                                     iface           = std::string());
 
     /**
      * @brief Stop the client
