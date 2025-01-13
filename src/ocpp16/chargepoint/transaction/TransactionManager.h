@@ -23,6 +23,7 @@ along with OpenOCPP. If not, see <http://www.gnu.org/licenses/>.
 #include "GenericMessageHandler.h"
 #include "RemoteStartTransaction.h"
 #include "RemoteStopTransaction.h"
+#include "MeterValue.h"
 
 namespace ocpp
 {
@@ -89,9 +90,10 @@ class TransactionManager : public ocpp::messages::GenericMessageHandler<ocpp::me
      * @param connector_id Id of the connector
      * @param id_tag Id of the user (leave empty if no id tag)
      * @param reason Stop reason
+     * @param meter_values Meter values
      * @return true if a corresponding transaction exist and has been stopped, false otherwise
      */
-    bool stopTransaction(unsigned int connector_id, const std::string& id_tag, ocpp::types::ocpp16::Reason reason);
+    bool stopTransaction(unsigned int connector_id, const std::string& id_tag, ocpp::types::ocpp16::Reason reason, const std::vector<ocpp::types::ocpp16::MeterValue>& meter_values = {});
 
     // GenericMessageHandler interface
 

@@ -203,7 +203,7 @@ AuthorizationStatus TransactionManager::startTransaction(unsigned int connector_
 }
 
 /** @brief Stop a transaction */
-bool TransactionManager::stopTransaction(unsigned int connector_id, const std::string& id_tag, ocpp::types::ocpp16::Reason reason)
+bool TransactionManager::stopTransaction(unsigned int connector_id, const std::string& id_tag, ocpp::types::ocpp16::Reason reason, const std::vector<ocpp::types::ocpp16::MeterValue>& meter_values)
 {
     bool ret = false;
 
@@ -228,6 +228,13 @@ bool TransactionManager::stopTransaction(unsigned int connector_id, const std::s
             stop_transaction_req.transactionId = connector->transaction_id;
             stop_transaction_req.reason        = reason;
             m_meter_values_manager.getTxStopMeterValues(connector_id, stop_transaction_req.transactionData);
+
+            if (!meter_values.empty())
+            {
+                for (auto const& meter_value: meter_values) {
+                    stop_transaction_req.transactionData.push_back(meter_value);
+                }
+            }
 
             // Reset transaction id
             {

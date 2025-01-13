@@ -173,9 +173,10 @@ class IChargePoint
      * @param connector_id Id of the connector
      * @param id_tag Id of the user (leave empty if no id tag)
      * @param reason Stop reason
+     * @param meter_values Meter Values append in transactionData
      * @return true if a corresponding transaction exist and has been stopped, false otherwise
      */
-    virtual bool stopTransaction(unsigned int connector_id, const std::string& id_tag, ocpp::types::ocpp16::Reason reason) = 0;
+    virtual bool stopTransaction(unsigned int connector_id, const std::string& id_tag, ocpp::types::ocpp16::Reason reason, const std::vector<ocpp::types::ocpp16::MeterValue>& meter_values = {}) = 0;
 
     /**
      * @brief Send a data transfer request

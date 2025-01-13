@@ -570,8 +570,8 @@ AuthorizationStatus ChargePoint::startTransaction(unsigned int connector_id, con
     return ret;
 }
 
-/** @copydoc bool IChargePoint::stopTransaction(unsigned int, const std::string&, ocpp::types::ocpp16::Reason) */
-bool ChargePoint::stopTransaction(unsigned int connector_id, const std::string& id_tag, ocpp::types::ocpp16::Reason reason)
+/** @copydoc bool IChargePoint::stopTransaction(unsigned int, const std::string&, ocpp::types::ocpp16::Reason, const std::vector<ocpp::types::ocpp16::MeterValue>&) */
+bool ChargePoint::stopTransaction(unsigned int connector_id, const std::string& id_tag, ocpp::types::ocpp16::Reason reason, const std::vector<ocpp::types::ocpp16::MeterValue>& meter_values)
 {
     bool ret = false;
 
@@ -579,7 +579,7 @@ bool ChargePoint::stopTransaction(unsigned int connector_id, const std::string& 
     {
         if (m_status_manager->getRegistrationStatus() == RegistrationStatus::Accepted)
         {
-            ret = m_transaction_manager->stopTransaction(connector_id, id_tag, reason);
+            ret = m_transaction_manager->stopTransaction(connector_id, id_tag, reason, meter_values);
         }
         else
         {

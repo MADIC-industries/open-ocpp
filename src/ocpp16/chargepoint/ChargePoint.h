@@ -134,8 +134,8 @@ class ChargePoint : public IChargePoint,
                                                               const std::string& id_tag,
                                                               int&               transaction_id) override;
 
-    /** @copydoc bool IChargePoint::stopTransaction(unsigned int, const std::string&, ocpp::types::ocpp16::Reason) */
-    bool stopTransaction(unsigned int connector_id, const std::string& id_tag, ocpp::types::ocpp16::Reason reason) override;
+    /** @copydoc bool IChargePoint::stopTransaction(unsigned int, const std::string&, ocpp::types::ocpp16::Reason, const std::vector<ocpp::types::ocpp16::MeterValue>&) */
+    bool stopTransaction(unsigned int connector_id, const std::string& id_tag, ocpp::types::ocpp16::Reason reason, const std::vector<ocpp::types::ocpp16::MeterValue>& meter_values = {}) override;
 
     /** @copydoc bool IChargePoint::dataTransfer(const std::string&,
                                                  const std::string&,
