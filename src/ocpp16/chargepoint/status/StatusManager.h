@@ -162,7 +162,7 @@ class StatusManager : public IStatusManager,
     /** @brief Heartbeat process */
     void heartBeatProcess();
     /** @brief Status notification process */
-    void statusNotificationProcess(unsigned int connector_id);
+    void statusNotificationProcess(unsigned int connector_id, bool update = true);
     /** @brief Send the boot notification message */
     void sendBootNotification();
 };
