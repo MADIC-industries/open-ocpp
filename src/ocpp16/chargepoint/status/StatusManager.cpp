@@ -175,7 +175,7 @@ bool StatusManager::updateConnectorStatus(unsigned int                          
                 if (duration == std::chrono::seconds(0))
                 {
                     // Notify now
-                    m_worker_pool.run<void>(std::bind(&StatusManager::statusNotificationProcess, this, connector_id));
+                    m_worker_pool.run<void>(std::bind(&StatusManager::statusNotificationProcess, this, connector_id, false));
                 }
                 else
                 {
@@ -185,7 +185,7 @@ bool StatusManager::updateConnectorStatus(unsigned int                          
                     {
                         connector->status_timer.setCallback(
                             [this, connector_id]
-                            { m_worker_pool.run<void>(std::bind(&StatusManager::statusNotificationProcess, this, connector_id)); });
+                            { m_worker_pool.run<void>(std::bind(&StatusManager::statusNotificationProcess, this, connector_id, true)); });
                         connector->status_timer.start(std::chrono::milliseconds(duration), true);
                     }
                 }
@@ -555,10 +555,11 @@ void StatusManager::heartBeatProcess()
 }
 
 /** @brief Status notification process */
-void StatusManager::statusNotificationProcess(unsigned int connector_id)
+void StatusManager::statusNotificationProcess(unsigned int connector_id, bool update)
 {
     // Check synchrononicity
-    updateConnector(connector_id);
+    if (update)
+        updateConnector(connector_id);
     // Get connector
     Connector* connector = m_connectors.getConnector(connector_id);
     if (connector)
