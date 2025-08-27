@@ -912,6 +912,10 @@ class ChargePoint20
 
         return ret;
     }
+
+    protected:
+
+        ocpp::config::InternalConfigManager& getInternalConfigManager() { return m_internal_config; }
 };
 
 } // namespace ocpp20
