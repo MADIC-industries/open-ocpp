@@ -899,12 +899,16 @@ class ChargePoint20
         if (m_msg_sender && !m_stop_in_progress)
         {
             ocpp::messages::CallResult res = m_msg_sender->call(action, request, response, error, message);
-            if (res != ocpp::messages::CallResult::Ok)
+            if (res == ocpp::messages::CallResult::Delayed)
+            {
+                LOG_INFO << "[" << identifier << "] - " << action << " => Delayed";
+            }
+            else if (res != ocpp::messages::CallResult::Ok)
             {
                 LOG_ERROR << "[" << identifier << "] - " << action << " => "
                           << (res == ocpp::messages::CallResult::Failed ? "Timeout" : "Error");
             }
-            else
+            if (res != ocpp::messages::CallResult::Failed && res != ocpp::messages::CallResult::Delayed)
             {
                 ret = true;
             }
