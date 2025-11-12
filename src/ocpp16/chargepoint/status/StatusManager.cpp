@@ -433,6 +433,14 @@ bool StatusManager::handleMessage(const ocpp::messages::ocpp16::ChangeAvailabili
             {
                 for (unsigned int i = 0; i <= m_connectors.getCount(); i++)
                 {
+                    // Update Connector Availability
+                    Connector* sub_connector = m_connectors.getConnector(i);
+                    if (sub_connector)
+                    {
+                        std::lock_guard<std::mutex> lock(sub_connector->mutex);
+                        sub_connector->availability = static_cast<AvailabilityType>(request.type);
+                        m_connectors.saveConnector(sub_connector->id);
+                    }
                     m_worker_pool.run<void>([this, i, status, error_code, info, vendor_id, vendor_error] { updateConnectorStatus(i, status, error_code, info, vendor_id, vendor_error); });
                 }
             }
