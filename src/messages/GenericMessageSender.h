@@ -19,6 +19,7 @@ along with OpenOCPP. If not, see <http://www.gnu.org/licenses/>.
 #ifndef OPENOCPP_GENERICMESSAGESENDER_H
 #define OPENOCPP_GENERICMESSAGESENDER_H
 
+#include "IMessageSender.h"
 #include "EnumToStringFromString.h"
 #include "GenericMessagesConverter.h"
 #include "IMessagesValidator.h"
@@ -31,24 +32,8 @@ namespace ocpp
 namespace messages
 {
 
-/** @brief Result of of a call request */
-enum class CallResult
-{
-    /** @brief Message has been sent and a response has been received */
-    Ok,
-    /** @brief Message will be sent later */
-    Delayed,
-    /** @brief Message cannot be send or no response has been received */
-    Failed,
-    /** @brief A call error message has been received */
-    Error
-};
-
-/** @brief Helper to convert a CallResult enum to string */
-extern const ocpp::types::EnumToStringFromString<CallResult> CallResultHelper;
-
 /** @brief Generic message sender with C++ data type to JSON conversion */
-class GenericMessageSender
+class GenericMessageSender: public IMessageSender
 {
   public:
     /** @brief Constructor */
@@ -67,13 +52,13 @@ class GenericMessageSender
      * @brief Indicate if the connection with the central system is active
      * @return true if the connection is active, false otherwise
      */
-    bool isConnected() const { return m_rpc.isConnected(); }
+    bool isConnected() const override { return m_rpc.isConnected(); }
 
     /**
      * @brief Set the call request timeout
      * @param timeout New timeout value
      */
-    void setTimeout(std::chrono::milliseconds timeout) { m_timeout = timeout; }
+    void setTimeout(std::chrono::milliseconds timeout) override { m_timeout = timeout; }
 
     /**
      * @brief Execute a call request
