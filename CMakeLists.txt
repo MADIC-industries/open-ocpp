@@ -182,3 +182,39 @@ if(${BUILD_STATIC_LIBRARY})
     )
     install(FILES "${CMAKE_BINARY_DIR}/libopen-ocpp_static.pc" DESTINATION ${CMAKE_INSTALL_LIBDIR}/pkgconfig)
 endif()
+
+if(${INSTALL_HELPERS_LIBRARY})
+    # Create static library from object library
+    add_library(helpers_static STATIC $<TARGET_OBJECTS:helpers>)
+    set_target_properties(helpers_static PROPERTIES OUTPUT_NAME "open-ocpp_static_helpers")
+    install(TARGETS helpers_static
+            RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR}
+            LIBRARY DESTINATION ${CMAKE_INSTALL_LIBDIR}
+            ARCHIVE DESTINATION ${CMAKE_INSTALL_LIBDIR}
+    )
+    set(LIB_NAME                "open-ocpp_static_helpers")
+    configure_file(
+      "${CMAKE_CURRENT_SOURCE_DIR}/deploy/libopen-ocpp.pc.in"
+      "${CMAKE_CURRENT_BINARY_DIR}/libopen-ocpp_static-helpers.pc"
+    )
+    install(FILES "${CMAKE_BINARY_DIR}/libopen-ocpp_static-helpers.pc" DESTINATION ${CMAKE_INSTALL_LIBDIR}/pkgconfig)
+endif()
+
+if(${INSTALL_X509_LIBRARY})
+    # Create static library from object library
+    add_library(x509_static STATIC $<TARGET_OBJECTS:x509>)
+    target_link_libraries(x509_static PUBLIC helpers OpenSSL::SSL OpenSSL::Crypto)
+    set_target_properties(x509_static PROPERTIES OUTPUT_NAME "open-ocpp_static_x509")
+
+    install(TARGETS x509_static
+            RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR}
+            LIBRARY DESTINATION ${CMAKE_INSTALL_LIBDIR}
+            ARCHIVE DESTINATION ${CMAKE_INSTALL_LIBDIR}
+            )
+    set(LIB_NAME                "open-ocpp_static_x509")
+    configure_file(
+      "${CMAKE_CURRENT_SOURCE_DIR}/deploy/libopen-ocpp.pc.in"
+      "${CMAKE_CURRENT_BINARY_DIR}/libopen-ocpp_static-x509.pc"
+    )
+    install(FILES "${CMAKE_BINARY_DIR}/libopen-ocpp_static-x509.pc" DESTINATION ${CMAKE_INSTALL_LIBDIR}/pkgconfig)
+endif()
