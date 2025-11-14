@@ -46,3 +46,6 @@ option(USE_CRT_ALLOC_FOR_RAPIDJSON  "Use the CrtAllocator for Rapidjson instead 
 if(USE_CRT_ALLOC_FOR_RAPIDJSON)
     add_compile_definitions(RAPIDJSON_DEFAULT_ALLOCATOR=::RAPIDJSON_NAMESPACE::CrtAllocator)
 endif()
+
+option(INSTALL_HELPERS_LIBRARY      "Install the helpers library"                                           OFF)
+option(INSTALL_X509_LIBRARY         "Install the x509 library"                                              OFF)

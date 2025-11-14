@@ -182,3 +182,31 @@ if(${BUILD_STATIC_LIBRARY})
     )
     install(FILES "${CMAKE_BINARY_DIR}/libopen-ocpp_static.pc" DESTINATION ${CMAKE_INSTALL_LIBDIR}/pkgconfig)
 endif()
+
+if(${INSTALL_HELPERS_LIBRARY})
+    install(TARGETS helpers
+            RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR}
+            LIBRARY DESTINATION ${CMAKE_INSTALL_LIBDIR}
+            ARCHIVE DESTINATION ${CMAKE_INSTALL_LIBDIR}
+    )
+    set(LIB_NAME                "open-ocpp_static_helpers")
+    configure_file(
+      "${CMAKE_CURRENT_SOURCE_DIR}/deploy/libopen-ocpp.pc.in"
+      "${CMAKE_CURRENT_BINARY_DIR}/libopen-ocpp_static-helpers.pc"
+    )
+    install(FILES "${CMAKE_BINARY_DIR}/libopen-ocpp_static-helpers.pc" DESTINATION ${CMAKE_INSTALL_LIBDIR}/pkgconfig)
+endif()
+
+if(${INSTALL_X509_LIBRARY})
+    install(TARGETS x509
+            RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR}
+            LIBRARY DESTINATION ${CMAKE_INSTALL_LIBDIR}
+            ARCHIVE DESTINATION ${CMAKE_INSTALL_LIBDIR}
+    )
+    set(LIB_NAME                "open-ocpp_static_x509")
+    configure_file(
+      "${CMAKE_CURRENT_SOURCE_DIR}/deploy/libopen-ocpp.pc.in"
+      "${CMAKE_CURRENT_BINARY_DIR}/libopen-ocpp_static-x509.pc"
+    )
+    install(FILES "${CMAKE_BINARY_DIR}/libopen-ocpp_static-x509.pc" DESTINATION ${CMAKE_INSTALL_LIBDIR}/pkgconfig)
+endif()

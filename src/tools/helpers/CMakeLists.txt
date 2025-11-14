@@ -1,6 +1,6 @@
 
 # Helper library
-add_library(helpers OBJECT 
+add_library(helpers STATIC
     IniFile.cpp
     StringHelpers.cpp
     Timer.cpp
@@ -8,3 +8,4 @@ add_library(helpers OBJECT
     WorkerThreadPool.cpp
 )
 target_include_directories(helpers PUBLIC .)
+set_target_properties(helpers PROPERTIES OUTPUT_NAME "open-ocpp_static_helpers")
