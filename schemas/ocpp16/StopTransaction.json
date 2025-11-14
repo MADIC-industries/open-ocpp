@@ -65,7 +65,7 @@
                                         "Trigger",
                                         "Other"
                                     ]
-                                },  
+                                },
                                 "format": {
                                     "type": "string",
                                     "additionalProperties": false,
@@ -147,6 +147,7 @@
                                         "V",
                                         "K",
                                         "Celcius",
+                                        "Celsius",
                                         "Fahrenheit",
                                         "Percent"
                                     ]
