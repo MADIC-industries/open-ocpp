@@ -8,6 +8,7 @@ add_library(x509 OBJECT
     PrivateKey.cpp
     Sha2.cpp
     X509Document.cpp
+    openssl.cpp
 
     impl/sign.cpp
  )
