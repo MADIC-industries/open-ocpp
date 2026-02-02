@@ -23,6 +23,55 @@ along with OpenOCPP. If not, see <http://www.gnu.org/licenses/>.
 #include <functional>
 #include <iostream>
 
+#if (OPENSSL_VERSION_NUMBER >= 0x30000000L)
+#include "openssl.h"
+// OpenSSL 3.x
+/** @brief Load private key from URI */
+int configure_ssl_context_with_private_key_from_uri(SSL_CTX *ctx, ocpp::websockets::IWebsocketServer::Credentials& creds)
+{
+    /* Try to load private key via provider URI (OpenSSL3 OSSL_STORE) */
+    EVP_PKEY *pkey = load_private_key_from_store_uri(creds.server_certificate_private_key.c_str());
+    if (!pkey) {
+        return -1;
+    }
+
+    /* Make the key available to the SSL_CTX */
+    /* SSL_CTX_use_PrivateKey accepts an EVP_PKEY and copies it internally */
+    if (SSL_CTX_use_PrivateKey(ctx, pkey) != 1) {
+        ERR_print_errors_fp(stderr);
+        EVP_PKEY_free(pkey);
+        return -1;
+    }
+
+    /* Load certificate from PEM file (disk) */
+    if (SSL_CTX_use_certificate_chain_file(ctx, creds.server_certificate.c_str()) != 1) {
+        ERR_print_errors_fp(stderr);
+        EVP_PKEY_free(pkey);
+        return 1;
+    }
+
+    if (SSL_CTX_check_private_key(ctx) != 1) {
+        ERR_print_errors_fp(stderr);
+        EVP_PKEY_free(pkey);
+        return -1;
+    }
+
+    if (!creds.server_certificate_ca.empty()) {
+        /* Load CA certificates for client certificate verification */
+        if (SSL_CTX_load_verify_locations(ctx, creds.server_certificate_ca.c_str(), nullptr) != 1) {
+            ERR_print_errors_fp(stderr);
+            EVP_PKEY_free(pkey);
+            return -1;
+        }
+    }
+
+    /* Ownership: EVP_PKEY_free after SSL_CTX_use_PrivateKey succeeded */
+    EVP_PKEY_free(pkey);
+
+    return 0;
+}
+#endif // OPENSSL_VERSION_NUMBER
+
 namespace ocpp
 {
 namespace websockets
@@ -165,7 +214,15 @@ bool LibWebsocketServer::start(const std::string&        url,
                     }
                     if (!m_credentials.server_certificate_private_key.empty())
                     {
-                        info.ssl_private_key_filepath = m_credentials.server_certificate_private_key.c_str();
+#if OPENSSL_VERSION_NUMBER >= 0x30000000L
+                        if (m_credentials.server_certificate_private_key.rfind(":", 0) == 0)
+                        {
+                            info.options |= LWS_SERVER_OPTION_CREATE_VHOST_SSL_CTX;
+                        }else
+#endif // OPENSSL_VERSION_NUMBER
+                        {
+                            info.ssl_private_key_filepath = m_credentials.server_certificate_private_key.c_str();
+                        }
                     }
                     if (!m_credentials.server_certificate_ca.empty())
                     {
@@ -588,7 +645,16 @@ int LibWebsocketServer::eventCallback(struct lws* wsi, enum lws_callback_reasons
             }
         }
         break;
-
+#if (OPENSSL_VERSION_NUMBER >= 0x30000000L)
+        case LWS_CALLBACK_OPENSSL_LOAD_EXTRA_SERVER_VERIFY_CERTS:
+            {
+                SSL_CTX *ctx = static_cast<SSL_CTX *>(user);
+                if (configure_ssl_context_with_private_key_from_uri(ctx, server->m_credentials) != 0) {
+                    ret = -1;
+                }
+            }
+            break;
+#endif // OPENSSL_VERSION_NUMBER >= 0x30000000L
         default:
             break;
     }

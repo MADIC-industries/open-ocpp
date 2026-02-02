@@ -23,6 +23,80 @@ along with OpenOCPP. If not, see <http://www.gnu.org/licenses/>.
 #include <functional>
 #include <iostream>
 
+#if OPENSSL_VERSION_NUMBER >= 0x30000000L
+
+#include "openssl.h"
+// OpenSSL 3.x
+/** @brief Load private key from URI */
+SSL_CTX * create_ssl_context(ocpp::websockets::IWebsocketClient::Credentials& creds)
+{
+    SSL_CTX *ctx = nullptr;
+    EVP_PKEY *pkey = nullptr;
+    int rc;
+
+    /* Init OpenSSL (only once in your process; safe to call repeatedly) */
+    OPENSSL_init_ssl(0, nullptr);
+    ERR_load_crypto_strings();
+
+    ctx = SSL_CTX_new(TLS_client_method());
+    if (!ctx) {
+        ERR_print_errors_fp(stderr);
+        return nullptr;
+    }
+
+
+    if(!creds.client_certificate.empty()) {
+        rc = SSL_CTX_use_certificate_chain_file(ctx, creds.client_certificate.c_str());
+        if (rc != 1) {
+            ERR_print_errors_fp(stderr);
+            SSL_CTX_free(ctx);
+            return nullptr;
+        }
+    }
+
+    /* Try to load private key via provider URI (OpenSSL3 OSSL_STORE) */
+    pkey = load_private_key_from_store_uri(creds.client_certificate_private_key.c_str());
+    if (!pkey) {
+        SSL_CTX_free(ctx);
+        return nullptr;
+    }
+
+    /* Make the key available to the SSL_CTX */
+    /* SSL_CTX_use_PrivateKey accepts an EVP_PKEY and copies it internally */
+    if (SSL_CTX_use_PrivateKey(ctx, pkey) != 1) {
+        ERR_print_errors_fp(stderr);
+        EVP_PKEY_free(pkey);
+        SSL_CTX_free(ctx);
+        return nullptr;
+    }
+
+    /* Optionally verify cert/key match */
+    if (SSL_CTX_check_private_key(ctx) != 1) {
+        ERR_print_errors_fp(stderr);
+        EVP_PKEY_free(pkey);
+        SSL_CTX_free(ctx);
+        return nullptr;
+    }
+
+    if(!creds.server_certificate_ca.empty()) {
+        /* Load CA certificates for server certificate verification */
+        if (SSL_CTX_load_verify_locations(ctx, creds.server_certificate_ca.c_str(), nullptr) != 1) {
+            ERR_print_errors_fp(stderr);
+            SSL_CTX_free(ctx);
+            return nullptr;
+        }
+    }
+
+    /* Ownership: EVP_PKEY_free after SSL_CTX_use_PrivateKey succeeded */
+    EVP_PKEY_free(pkey);
+
+    /* Additional SSL_CTX setup (ciphers, options) as needed */
+    SSL_CTX_set_options(ctx, SSL_OP_SINGLE_ECDH_USE | SSL_OP_NO_SSLv2 | SSL_OP_NO_SSLv3);
+
+    return ctx;
+}
+#endif // OPENSSL_VERSION_NUMBER
+
 /** @brief Generate basic authent header with bytes password (may contain \0 char) */
 int lws_http_basic_auth_gen2(const char* user, const void* pw, size_t pwd_len, char* buf, size_t len)
 {
@@ -174,7 +248,15 @@ bool LibWebsocketClient::connect(const std::string&        url,
                     }
                     if (!m_credentials.client_certificate_private_key.empty())
                     {
-                        info.client_ssl_private_key_filepath = m_credentials.client_certificate_private_key.c_str();
+#if OPENSSL_VERSION_NUMBER >= 0x30000000L
+                        if(m_credentials.client_certificate_private_key.rfind(":", 0) == 0) {
+                            // Special handling for private key URI
+                            info.provided_client_ssl_ctx = create_ssl_context(m_credentials);
+                        } else
+#endif // OPENSSL_VERSION_NUMBER
+                        {
+                            info.client_ssl_private_key_filepath = m_credentials.client_certificate_private_key.c_str();
+                        }
                     }
                 }
                 if (!m_credentials.client_certificate_private_key_passphrase.empty())
