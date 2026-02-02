@@ -26,6 +26,7 @@ along with OpenOCPP. If not, see <http://www.gnu.org/licenses/>.
 #endif // _MSC_VER
 
 // Include OpenSSL's headers
+#include <openssl/ssl.h>
 #include <openssl/bio.h>
 #include <openssl/err.h>
 #include <openssl/evp.h>
@@ -37,6 +38,10 @@ along with OpenOCPP. If not, see <http://www.gnu.org/licenses/>.
 #if (OPENSSL_VERSION_NUMBER >= 0x30000000L)
 // OpenSSL 3.x
 #include <openssl/core_names.h>
+#include <openssl/store.h>
+
+EVP_PKEY* load_private_key_from_store_uri(const char* uri);
+
 #endif // OPENSSL_VERSION_NUMBER
 
 // Restore MSVC warnings

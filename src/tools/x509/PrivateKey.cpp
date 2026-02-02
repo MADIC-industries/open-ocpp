@@ -179,8 +179,12 @@ PrivateKey::PrivateKey(const std::string& uri)
     int   bio_len  = BIO_get_mem_data(bio, &bio_data);
     m_public_pem.insert(0, bio_data, static_cast<size_t>(bio_len));
     BIO_free(bio);
+
     // Key size and algo
     readKeySizeAlgo(pkey);
+    // Save OepenSSL object
+    m_is_valid       = true;
+    m_openssl_object = pkey;
 #else
     throw std::runtime_error("PrivateKey::PrivateKey(const std::string& uri) requires OpenSSL 3.0 or higher");
 #endif
