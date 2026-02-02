@@ -35,7 +35,7 @@ static const int s_ec_curves_nids[] = {
 
 /** @brief Constructor from PEM file */
 PrivateKey::PrivateKey(const std::filesystem::path& pem_file, const std::string& passphrase)
-    : m_is_valid(false), m_private_pem(), m_public_pem(), m_size(0), m_openssl_object(nullptr)
+    : m_is_valid(false), m_is_copying(true), m_private_pem(), m_public_pem(), m_size(0), m_openssl_object(nullptr)
 {
     // Open PEM file
     std::fstream file(pem_file, std::fstream::in | std::fstream::binary | std::fstream::ate);
@@ -54,7 +54,7 @@ PrivateKey::PrivateKey(const std::filesystem::path& pem_file, const std::string&
 
 /** @brief Constructor from PEM data */
 PrivateKey::PrivateKey(const std::string& pem_data, const std::string& passphrase)
-    : m_is_valid(false), m_private_pem(pem_data), m_public_pem(), m_size(0), m_openssl_object(nullptr)
+    : m_is_valid(false), m_is_copying(true), m_private_pem(pem_data), m_public_pem(), m_size(0), m_openssl_object(nullptr)
 {
     // Read the key
     readKey(passphrase);
@@ -62,7 +62,7 @@ PrivateKey::PrivateKey(const std::string& pem_data, const std::string& passphras
 
 /** @brief Constructor to generate a key */
 PrivateKey::PrivateKey(Type type, unsigned int param, const std::string& passphrase)
-    : m_is_valid(false), m_private_pem(), m_public_pem(), m_size(0), m_openssl_object(nullptr)
+    : m_is_valid(false), m_is_copying(true), m_private_pem(), m_public_pem(), m_size(0), m_openssl_object(nullptr)
 {
     EVP_PKEY*     pkey = nullptr;
     EVP_PKEY_CTX* ctx  = nullptr;
@@ -134,10 +134,65 @@ PrivateKey::PrivateKey(Type type, unsigned int param, const std::string& passphr
     }
 }
 
+PrivateKey::PrivateKey(void* openssl_object)
+    : m_is_valid(false), m_is_copying(false), m_private_pem(), m_public_pem(), m_size(0), m_openssl_object(nullptr)
+{
+    EVP_PKEY* pkey = reinterpret_cast<EVP_PKEY*>(m_openssl_object);
+    if (pkey)
+    {
+        // Public key
+        BIO* bio = BIO_new(BIO_s_mem());
+        PEM_write_bio_PUBKEY(bio, pkey);
+        char* bio_data = nullptr;
+        int   bio_len  = BIO_get_mem_data(bio, &bio_data);
+        m_public_pem.insert(0, bio_data, static_cast<size_t>(bio_len));
+        BIO_free(bio);
+
+        // Key size and algo
+        readKeySizeAlgo(pkey);
+        // Save OpenSSL object
+        m_is_valid       = true;
+        m_openssl_object = pkey;
+    }
+}
+
+PrivateKey::PrivateKey(const std::string& uri)
+    : m_is_valid(false), m_is_copying(false), m_private_pem(), m_public_pem(), m_size(0), m_openssl_object(nullptr)
+{
+#if (OPENSSL_VERSION_NUMBER >= 0x30000000L)
+// OpenSSL 3.x
+
+    OSSL_STORE_CTX *st = nullptr;
+    OSSL_STORE_INFO *info = nullptr;
+    EVP_PKEY *pkey = nullptr;
+
+    pkey = load_private_key_from_store_uri(uri.c_str());
+    if (pkey == nullptr) {
+        std::runtime_error("No private key found in URI: " + uri);
+        ERR_print_errors_fp(stderr);
+        return;
+    }
+    // Public key
+    BIO* bio = BIO_new(BIO_s_mem());
+    PEM_write_bio_PUBKEY(bio, pkey);
+    char* bio_data = nullptr;
+    int   bio_len  = BIO_get_mem_data(bio, &bio_data);
+    m_public_pem.insert(0, bio_data, static_cast<size_t>(bio_len));
+    BIO_free(bio);
+    // Key size and algo
+    readKeySizeAlgo(pkey);
+#else
+    throw std::runtime_error("PrivateKey::PrivateKey(const std::string& uri) requires OpenSSL 3.0 or higher");
+#endif
+}
+
 /** @brief Copy constructor */
 PrivateKey::PrivateKey(const PrivateKey& copy)
-    : m_is_valid(false), m_private_pem(copy.privatePemUnencrypted()), m_public_pem(), m_size(0), m_openssl_object(nullptr)
+    : m_is_valid(false), m_is_copying(copy.m_is_copying), m_private_pem(copy.privatePemUnencrypted()), m_public_pem(), m_size(0), m_openssl_object(nullptr)
 {
+    if (!m_is_copying) {
+        return;
+    }
     // Read the key
     readKey("");
 }
@@ -145,7 +200,9 @@ PrivateKey::PrivateKey(const PrivateKey& copy)
 /** @brief Destructor */
 PrivateKey::~PrivateKey()
 {
-    EVP_PKEY_free(reinterpret_cast<EVP_PKEY*>(m_openssl_object));
+    if (m_openssl_object){
+        EVP_PKEY_free(reinterpret_cast<EVP_PKEY*>(m_openssl_object));
+    }
 }
 
 /** @brief Compute the signature of a buffer using the private key */
@@ -191,6 +248,10 @@ bool PrivateKey::publicToFile(const std::filesystem::path& pem_file) const
 /** @brief Get the private key part as unencrypted PEM */
 std::string PrivateKey::privatePemUnencrypted() const
 {
+    if(!m_is_copying){
+        return "";
+    }
+
     std::string pem;
     EVP_PKEY*   pkey = reinterpret_cast<EVP_PKEY*>(m_openssl_object);
     if (pkey)

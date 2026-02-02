@@ -87,6 +87,19 @@ class PrivateKey
     PrivateKey(Type type, unsigned int param, const std::string& passphrase);
 
     /**
+     * @brief Constructor from an existing OpenSSL object
+     * @param openssl_object Pointer to an OpenSSL object representing the private key
+     * private key is not save into m_private_pem for security reason
+     */
+    PrivateKey(void* openssl_object);
+
+    /**
+     * @brief Constructor from a URI
+     * @param uri URI to the private key (e.g. pkcs11://...)
+     */
+    PrivateKey(const std::string& uri);
+
+    /**
      * @brief Copy constructor
      *        Warning : key encryption is lost
      * @param copy Key to copy
@@ -178,6 +191,8 @@ class PrivateKey
   protected:
     /** @brief Indicate if the document is valid */
     bool m_is_valid;
+    /** @brief Indicate if the key is being copied */
+    bool m_is_copying;
     /** @brief PEM encoded data representation of the private key */
     std::string m_private_pem;
     /** @brief PEM encoded data representation of the public key */
