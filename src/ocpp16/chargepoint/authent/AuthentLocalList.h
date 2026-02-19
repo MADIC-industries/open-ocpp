@@ -92,6 +92,18 @@ class AuthentLocalList
      */
     bool check(const std::string& id_tag, ocpp::types::ocpp16::IdTagInfo& tag_info);
 
+    /**
+     * @brief Get the local list version and the list of all the tags in the local list
+     * @return A pair containing the local list version and the list of all the tags in the local list
+     */
+    std::vector<ocpp::types::ocpp16::AuthorizationData> get();
+
+    /**
+     * @brief Perform the partial update of the local list
+     * @param authorization_datas List of the authorization data to update in the local list
+    */
+    bool performPartialUpdate(const std::vector<ocpp::types::ocpp16::AuthorizationData>& authorization_datas);
+
   private:
     /** @brief Standard OCPP configuration */
     ocpp::config::IOcppConfig& m_ocpp_config;
@@ -116,8 +128,6 @@ class AuthentLocalList
     void initDatabaseTable();
     /** @brief Perform the full update of the local list */
     bool performFullUpdate(const std::vector<ocpp::types::ocpp16::AuthorizationData>& authorization_datas);
-    /** @brief Perform the partial update of the local list */
-    bool performPartialUpdate(const std::vector<ocpp::types::ocpp16::AuthorizationData>& authorization_datas);
 };
 
 } // namespace chargepoint

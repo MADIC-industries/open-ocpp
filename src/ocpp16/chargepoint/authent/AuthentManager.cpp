@@ -268,5 +268,22 @@ void AuthentManager::iso15118Update(const std::string& token_id, const ocpp::typ
     }
 }
 
+/** @copydoc void IAuthentManager::clearCache() */
+void AuthentManager::clearCache()
+{
+    m_cache.clear();
+}
+
+/** @copydoc std::vector<ocpp::types::ocpp16::AuthorizationData> IAuthentManager::getLocalList() */
+std::vector<ocpp::types::ocpp16::AuthorizationData> AuthentManager::getLocalList()
+{
+    return m_local_list.get();
+}
+
+/** @copydoc void IAuthentManager::updateLocalList(const std::vector<ocpp::types::ocpp16::AuthorizationData>&) */
+bool AuthentManager::updateLocalList(std::vector<ocpp::types::ocpp16::AuthorizationData> const &auth_data)
+{
+    return m_local_list.performPartialUpdate(auth_data);
+}
 } // namespace chargepoint
 } // namespace ocpp

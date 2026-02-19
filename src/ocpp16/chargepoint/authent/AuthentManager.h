@@ -76,6 +76,15 @@ class AuthentManager : public IAuthentManager
     /** @copydoc void IAuthentManager::iso15118Update(const std::string&, const ocpp::types::ocpp16::IdTokenInfoType&) */
     void iso15118Update(const std::string& token_id, const ocpp::types::ocpp16::IdTokenInfoType& token_info) override;
 
+    /** @copydoc void IAuthentManager::clearCache() */
+    void clearCache() override;
+
+    /** @copydoc std::vector<ocpp::types::ocpp16::AuthorizationData> IAuthentManager::getLocalList() */
+    std::vector<ocpp::types::ocpp16::AuthorizationData> getLocalList() override;
+
+    /** @copydoc void IAuthentManager::updateLocalList(const std::vector<ocpp::types::ocpp16::AuthorizationData>&) */
+    bool updateLocalList(std::vector<ocpp::types::ocpp16::AuthorizationData> const &auth_data) override;
+
   private:
     /** @brief Standard OCPP configuration */
     ocpp::config::IOcppConfig& m_ocpp_config;
