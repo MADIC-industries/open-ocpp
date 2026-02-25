@@ -258,14 +258,19 @@ std::vector<ocpp::types::ocpp16::AuthorizationData> AuthentLocalList::get()
     auto query = m_database.query("SELECT * FROM AuthentLocalList;");
     if (query)
     {
-        if (query->exec())
+        if (query->exec() && query->hasRows())
         {
-            while (query->hasRows())
+            do
             {
                 AuthorizationData auth_data;
-                auth_data.idTag.assign(query->getString(1));
+                std::string id_tag = query->getString(1);
+                if (id_tag.empty())
+                {
+                    continue;
+                }
+                auth_data.idTag.assign(id_tag);
                 IdTagInfo       tag_info;
-                std::string     parent = query->getString(2);
+                std::string parent = query->getString(2);
                 if (parent.empty())
                 {
                     tag_info.parentIdTag.clear();
@@ -276,7 +281,7 @@ std::vector<ocpp::types::ocpp16::AuthorizationData> AuthentLocalList::get()
                 }
                 bool expiry_valid = !query->isNull(3);
                 std::time_t expiry = query->getInt64(3);
-                if (expiry_valid)
+                if (expiry_valid && expiry > 0)
                 {
                     tag_info.expiryDate = expiry;
                 }
@@ -287,7 +292,7 @@ std::vector<ocpp::types::ocpp16::AuthorizationData> AuthentLocalList::get()
                 tag_info.status = static_cast<AuthorizationStatus>(query->getInt32(4));
                 auth_data.idTagInfo = tag_info;
                 authorization_datas.push_back(auth_data);
-            }
+            } while (query->next());
         }
     }
 
