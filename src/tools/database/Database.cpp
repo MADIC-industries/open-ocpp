@@ -46,7 +46,37 @@ bool Database::open(const std::string& database_path)
         if (sqlite3_open_v2(database_path.c_str(), &m_db, SQLITE_OPEN_READWRITE | SQLITE_OPEN_CREATE | SQLITE_OPEN_FULLMUTEX, nullptr) ==
             SQLITE_OK)
         {
-            ret = true;
+
+            // Enable auto_vacuum if not already active
+            int auto_vacuum = -1;
+            sqlite3_stmt* stmt = nullptr;
+            if (sqlite3_prepare_v2(m_db, "PRAGMA auto_vacuum;", -1, &stmt, nullptr) == SQLITE_OK)
+            {
+                if (sqlite3_step(stmt) == SQLITE_ROW)
+                {
+                    auto_vacuum = sqlite3_column_int(stmt, 0);
+                }
+            }
+            if (stmt)
+            {
+                sqlite3_finalize(stmt);
+            }
+            if (auto_vacuum == 0)
+            {
+                if (sqlite3_exec(m_db, "PRAGMA auto_vacuum = FULL;", nullptr, nullptr, nullptr) == SQLITE_OK)
+                {
+                    if (sqlite3_exec(m_db, "VACUUM;", nullptr, nullptr, nullptr) == SQLITE_OK)
+                    {
+                        // Database is opened and auto_vacuum has been activated
+                        ret = true;
+                    }
+                }
+            }
+            else if (auto_vacuum == 1)
+            {
+                // Database is opened and auto_vacuum is already active
+                ret = true;
+            }
         }
     }
 
