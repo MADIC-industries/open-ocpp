@@ -27,7 +27,12 @@ namespace database
 {
 
 /** @brief Constructor */
-Database::Database() : m_db(nullptr) { }
+Database::Database() : m_db(nullptr)
+{
+    // Soft heap limit (process-wide): auto-triggers memory release when exceeded.
+    // 4 MB is safe across systems from 512 MB to 2 GB.
+    sqlite3_soft_heap_limit64(4 * 1024 * 1024);
+}
 /** @brief Destructor */
 Database::~Database()
 {
@@ -46,6 +51,8 @@ bool Database::open(const std::string& database_path)
         if (sqlite3_open_v2(database_path.c_str(), &m_db, SQLITE_OPEN_READWRITE | SQLITE_OPEN_CREATE | SQLITE_OPEN_FULLMUTEX, nullptr) ==
             SQLITE_OK)
         {
+            // Limit page cache to 1 MB (default is ~8 MB) — sufficient for OCPP workloads
+            sqlite3_exec(m_db, "PRAGMA cache_size = -1024;", nullptr, nullptr, nullptr);
 
             // Enable auto_vacuum if not already active
             int auto_vacuum = -1;
@@ -67,6 +74,8 @@ bool Database::open(const std::string& database_path)
                 {
                     if (sqlite3_exec(m_db, "VACUUM;", nullptr, nullptr, nullptr) == SQLITE_OK)
                     {
+                        // Release page cache memory back to the OS after VACUUM
+                        sqlite3_exec(m_db, "PRAGMA shrink_memory;", nullptr, nullptr, nullptr);
                         // Database is opened and auto_vacuum has been activated
                         ret = true;
                     }
