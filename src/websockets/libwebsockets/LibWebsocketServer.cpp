@@ -239,6 +239,11 @@ bool LibWebsocketServer::start(const std::string&        url,
                 }
             }
 
+            // Set this pointer before lws_create_context so that callbacks fired
+            // during TLS initialization (e.g. LWS_CALLBACK_OPENSSL_LOAD_EXTRA_SERVER_VERIFY_CERTS)
+            // can access the server instance via the thread-local 'server' variable.
+            server = this;
+
             // Create context
             m_context = lws_create_context(&info);
             if (m_context)
