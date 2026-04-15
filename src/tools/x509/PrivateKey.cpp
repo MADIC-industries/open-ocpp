@@ -137,9 +137,11 @@ PrivateKey::PrivateKey(Type type, unsigned int param, const std::string& passphr
 PrivateKey::PrivateKey(void* openssl_object)
     : m_is_valid(false), m_is_copying(false), m_private_pem(), m_public_pem(), m_size(0), m_openssl_object(nullptr)
 {
-    EVP_PKEY* pkey = reinterpret_cast<EVP_PKEY*>(m_openssl_object);
+    EVP_PKEY* pkey = reinterpret_cast<EVP_PKEY*>(openssl_object);
     if (pkey)
     {
+        EVP_PKEY_up_ref(pkey);
+
         // Public key
         BIO* bio = BIO_new(BIO_s_mem());
         PEM_write_bio_PUBKEY(bio, pkey);
@@ -192,13 +194,19 @@ PrivateKey::PrivateKey(const std::string& uri)
 
 /** @brief Copy constructor */
 PrivateKey::PrivateKey(const PrivateKey& copy)
-    : m_is_valid(false), m_is_copying(copy.m_is_copying), m_private_pem(copy.privatePemUnencrypted()), m_public_pem(), m_size(0), m_openssl_object(nullptr)
+    : m_is_valid(copy.m_is_valid),
+      m_is_copying(copy.m_is_copying),
+      m_private_pem(copy.m_private_pem),
+      m_public_pem(copy.m_public_pem),
+      m_size(copy.m_size),
+      m_algo(copy.m_algo),
+      m_algo_param(copy.m_algo_param),
+      m_openssl_object(copy.m_openssl_object)
 {
-    if (!m_is_copying) {
-        return;
+    if (m_openssl_object)
+    {
+        EVP_PKEY_up_ref(reinterpret_cast<EVP_PKEY*>(m_openssl_object));
     }
-    // Read the key
-    readKey("");
 }
 
 /** @brief Destructor */

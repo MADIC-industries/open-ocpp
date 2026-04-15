@@ -126,6 +126,15 @@ void CertificateRequest::readInfos()
 /** @brief Create a certificate request */
 void CertificateRequest::create(const Subject& subject, const Extensions& extensions, const PrivateKey& private_key, Sha2::Type sha)
 {
+    m_is_valid = false;
+    m_pem.clear();
+
+    if (m_openssl_object)
+    {
+        X509_REQ_free(reinterpret_cast<X509_REQ*>(m_openssl_object));
+        m_openssl_object = nullptr;
+    }
+
     // Check key validity
     if (!private_key.isValid())
     {
@@ -134,6 +143,10 @@ void CertificateRequest::create(const Subject& subject, const Extensions& extens
 
     // Create X509 request
     X509_REQ* x509_req = X509_REQ_new();
+    if (!x509_req)
+    {
+        return;
+    }
 
     // Set version (v3)
     X509_REQ_set_version(x509_req, 2);
@@ -210,12 +223,21 @@ void CertificateRequest::create(const Subject& subject, const Extensions& extens
                                    -1,
                                    0);
     }
-    X509_REQ_set_subject_name(x509_req, subject_name);
+    if (X509_REQ_set_subject_name(x509_req, subject_name) != 1)
+    {
+        X509_NAME_free(subject_name);
+        X509_REQ_free(x509_req);
+        return;
+    }
     X509_NAME_free(subject_name);
 
     // Set key
     EVP_PKEY* pkey = const_cast<EVP_PKEY*>(reinterpret_cast<const EVP_PKEY*>(private_key.object()));
-    X509_REQ_set_pubkey(x509_req, pkey);
+    if (!pkey || (X509_REQ_set_pubkey(x509_req, pkey) != 1))
+    {
+        X509_REQ_free(x509_req);
+        return;
+    }
 
     // Set extensions
     STACK_OF(X509_EXTENSION)* exts = nullptr;
@@ -301,17 +323,37 @@ void CertificateRequest::create(const Subject& subject, const Extensions& extens
     {
         digest = EVP_sha512();
     }
-    X509_REQ_sign(x509_req, pkey, digest);
+    if (!digest || (X509_REQ_sign(x509_req, pkey, digest) <= 0))
+    {
+        X509_REQ_free(x509_req);
+        return;
+    }
 
     // Convert to PEM
     BIO* bio = BIO_new(BIO_s_mem());
-    PEM_write_bio_X509_REQ(bio, x509_req);
+    if (!bio)
+    {
+        X509_REQ_free(x509_req);
+        return;
+    }
+    if (PEM_write_bio_X509_REQ(bio, x509_req) != 1)
+    {
+        BIO_free(bio);
+        X509_REQ_free(x509_req);
+        return;
+    }
     char* bio_data = nullptr;
     int   bio_len  = BIO_get_mem_data(bio, &bio_data);
-    m_pem.insert(0, bio_data, static_cast<size_t>(bio_len));
+    if ((bio_len <= 0) || !bio_data)
+    {
+        BIO_free(bio);
+        X509_REQ_free(x509_req);
+        return;
+    }
+    m_pem.assign(bio_data, static_cast<size_t>(bio_len));
     BIO_free(bio);
 
-    // Release memory
+    // Release temporary request before reloading parsed metadata from the generated PEM
     X509_REQ_free(x509_req);
 
     // Read PEM infos
