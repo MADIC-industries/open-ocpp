@@ -249,7 +249,7 @@ bool LibWebsocketClient::connect(const std::string&        url,
                     if (!m_credentials.client_certificate_private_key.empty())
                     {
 #if OPENSSL_VERSION_NUMBER >= 0x30000000L
-                        if(m_credentials.client_certificate_private_key.rfind(":", 0) == 0) {
+                        if(m_credentials.client_certificate_private_key.rfind(":") != std::string::npos) {
                             // Special handling for private key URI
                             info.provided_client_ssl_ctx = create_ssl_context(m_credentials);
                         } else
