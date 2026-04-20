@@ -20,6 +20,7 @@ along with OpenOCPP. If not, see <http://www.gnu.org/licenses/>.
 #include "Certificate.h"
 #include "CertificateRequest.h"
 #include "PrivateKey.h"
+#include "openssl.h"
 #define DOCTEST_CONFIG_IMPLEMENT_WITH_MAIN
 #include "doctest_wrapper.h"
 
@@ -768,5 +769,23 @@ TEST_SUITE("Base64")
         // Invalid input data to decode
         decoded_null = ocpp::x509::base64::decode("VGh");
         CHECK(decoded_null.empty());
+    }
+}
+
+TEST_SUITE("isStoreUri")
+{
+    TEST_CASE("Valid store URIs")
+    {
+        CHECK(ocpp::x509::openssl::isStoreUri("pkcs11:"));
+        CHECK(ocpp::x509::openssl::isStoreUri("engine:"));
+        CHECK(ocpp::x509::openssl::isStoreUri("provider:"));
+    }
+
+    TEST_CASE("Invalid store URIs")
+    {
+        CHECK_FALSE(ocpp::x509::openssl::isStoreUri(""));
+        CHECK_FALSE(ocpp::x509::openssl::isStoreUri("C:\\path\\to\\file"));
+        CHECK_FALSE(ocpp::x509::openssl::isStoreUri("/path/to/file"));
+        CHECK_FALSE(ocpp::x509::openssl::isStoreUri("1invalid:"));
     }
 }

@@ -18,6 +18,7 @@ along with OpenOCPP. If not, see <http://www.gnu.org/licenses/>.
 
 #include "LibWebsocketServer.h"
 
+#include <cctype>
 #include <csignal>
 #include <cstdint>
 #include <functional>
@@ -30,7 +31,7 @@ along with OpenOCPP. If not, see <http://www.gnu.org/licenses/>.
 int configure_ssl_context_with_private_key_from_uri(SSL_CTX *ctx, ocpp::websockets::IWebsocketServer::Credentials& creds)
 {
     /* Try to load private key via provider URI (OpenSSL3 OSSL_STORE) */
-    EVP_PKEY *pkey = load_private_key_from_store_uri(creds.server_certificate_private_key.c_str());
+    EVP_PKEY *pkey = ocpp::x509::openssl::loadPrivateKeyFromStore(creds.server_certificate_private_key);
     if (!pkey) {
         return -1;
     }
@@ -215,7 +216,7 @@ bool LibWebsocketServer::start(const std::string&        url,
                     if (!m_credentials.server_certificate_private_key.empty())
                     {
 #if OPENSSL_VERSION_NUMBER >= 0x30000000L
-                        if (m_credentials.server_certificate_private_key.rfind(":", 0) == 0)
+                        if (ocpp::x509::openssl::isStoreUri(m_credentials.server_certificate_private_key))
                         {
                             info.options |= LWS_SERVER_OPTION_CREATE_VHOST_SSL_CTX;
                         }else

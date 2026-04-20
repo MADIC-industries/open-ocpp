@@ -168,7 +168,7 @@ PrivateKey::PrivateKey(const std::string& uri)
     OSSL_STORE_INFO *info = nullptr;
     EVP_PKEY *pkey = nullptr;
 
-    pkey = load_private_key_from_store_uri(uri.c_str());
+    pkey = ocpp::x509::openssl::loadPrivateKeyFromStore(uri);
     if (pkey == nullptr) {
         std::runtime_error("No private key found in URI: " + uri);
         ERR_print_errors_fp(stderr);
