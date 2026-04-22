@@ -45,16 +45,6 @@ SSL_CTX * create_ssl_context(ocpp::websockets::IWebsocketClient::Credentials& cr
         return nullptr;
     }
 
-
-    if(!creds.client_certificate.empty()) {
-        rc = SSL_CTX_use_certificate_chain_file(ctx, creds.client_certificate.c_str());
-        if (rc != 1) {
-            ERR_print_errors_fp(stderr);
-            SSL_CTX_free(ctx);
-            return nullptr;
-        }
-    }
-
     /* Try to load private key via provider URI (OpenSSL3 OSSL_STORE) */
     pkey = ocpp::x509::openssl::loadPrivateKeyFromStore(creds.client_certificate_private_key);
     if (!pkey) {
@@ -71,12 +61,21 @@ SSL_CTX * create_ssl_context(ocpp::websockets::IWebsocketClient::Credentials& cr
         return nullptr;
     }
 
-    /* Optionally verify cert/key match */
-    if (SSL_CTX_check_private_key(ctx) != 1) {
-        ERR_print_errors_fp(stderr);
-        EVP_PKEY_free(pkey);
-        SSL_CTX_free(ctx);
-        return nullptr;
+
+    if(!creds.client_certificate.empty()) {
+        rc = SSL_CTX_use_certificate_chain_file(ctx, creds.client_certificate.c_str());
+        if (rc != 1) {
+            ERR_print_errors_fp(stderr);
+            SSL_CTX_free(ctx);
+            return nullptr;
+        }
+        /* Optionally verify cert/key match */
+        if (SSL_CTX_check_private_key(ctx) != 1) {
+            ERR_print_errors_fp(stderr);
+            EVP_PKEY_free(pkey);
+            SSL_CTX_free(ctx);
+            return nullptr;
+        }
     }
 
     if(!creds.server_certificate_ca.empty()) {
@@ -90,9 +89,6 @@ SSL_CTX * create_ssl_context(ocpp::websockets::IWebsocketClient::Credentials& cr
 
     /* Ownership: EVP_PKEY_free after SSL_CTX_use_PrivateKey succeeded */
     EVP_PKEY_free(pkey);
-
-    /* Additional SSL_CTX setup (ciphers, options) as needed */
-    SSL_CTX_set_options(ctx, SSL_OP_SINGLE_ECDH_USE | SSL_OP_NO_SSLv2 | SSL_OP_NO_SSLv3);
 
     return ctx;
 }
