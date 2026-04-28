@@ -526,7 +526,7 @@ int LibWebsocketClient::eventCallback(struct lws* wsi, enum lws_callback_reasons
         case LWS_CALLBACK_CLIENT_APPEND_HANDSHAKE_HEADER:
         {
             unsigned char **p = (unsigned char**)in, *end = (*p) + len;
-            char            b[128];
+            char            b[256];
 
             if (client->m_credentials.user.empty())
                 break;

@@ -1171,10 +1171,8 @@ bool ChargePoint::doConnect()
     std::string authorization_key = m_ocpp_config.authorizationKey();
     if (!authorization_key.empty() && (security_profile <= 2))
     {
-        auto authentication_key = ocpp::helpers::fromHexString(authorization_key);
         credentials.user        = m_stack_config.chargePointIdentifier();
-        credentials.password    = std::string(reinterpret_cast<const char*>(authentication_key.data()), authentication_key.size());
-        credentials.password.resize(authentication_key.size());
+        credentials.password    = authorization_key;
     }
     if (security_profile != 1)
     {
