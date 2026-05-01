@@ -384,6 +384,25 @@ void Iso15118Manager::handle(const ocpp::messages::ocpp16::Iso15118GetInstalledC
         v2g_root_certificate, mo_root_certificate, v2g_certificate_chain, oem_root_certificate, certificates);
     if (!certificates.empty())
     {
+        // Build an issuer lookup pool from all installed certificates returned by the handler.
+        std::vector<const Certificate*> issuer_candidates;
+        issuer_candidates.reserve(certificates.size() * 2u);
+        for (const auto& [cert_type, certificate, child_certificates] : certificates)
+        {
+            (void)cert_type;
+            if (certificate.isValid())
+            {
+                issuer_candidates.push_back(&certificate);
+            }
+            for (const auto& child_cert : child_certificates)
+            {
+                if (child_cert.isValid())
+                {
+                    issuer_candidates.push_back(&child_cert);
+                }
+            }
+        }
+
         // Compute hashes for each certificate
         for (const auto& [cert_type, certificate, child_certificates] : certificates)
         {
@@ -392,11 +411,20 @@ void Iso15118Manager::handle(const ocpp::messages::ocpp16::Iso15118GetInstalledC
                 response.certificateHashDataChain.emplace_back();
                 CertificateHashDataChainType& hash_data = response.certificateHashDataChain.back();
                 hash_data.certificateType               = cert_type;
-                fillHashInfo(certificate, hash_data.certificateHashData);
-                for (const auto& cert : child_certificates)
+
+                // Prefer explicit next cert in chain, otherwise resolve issuer from installed certificates.
+                const Certificate* leaf_issuer = !child_certificates.empty() ? &child_certificates.front()
+                                                                              : findIssuerCertificate(certificate, issuer_candidates);
+                fillHashInfo(certificate, (leaf_issuer != nullptr) ? *leaf_issuer : certificate, hash_data.certificateHashData);
+
+                for (std::size_t i = 0; i < child_certificates.size(); ++i)
                 {
+                    const Certificate& cert = child_certificates[i];
+                    const Certificate* issuer_cert = (i + 1u < child_certificates.size())
+                                                         ? &child_certificates[i + 1u]
+                                                         : findIssuerCertificate(cert, issuer_candidates);
                     hash_data.childCertificateHashData.emplace_back();
-                    fillHashInfo(cert, hash_data.childCertificateHashData.back());
+                    fillHashInfo(cert, (issuer_cert != nullptr) ? *issuer_cert : cert, hash_data.childCertificateHashData.back());
                 }
             }
         }
@@ -459,15 +487,19 @@ void Iso15118Manager::handle(const ocpp::messages::ocpp16::Iso15118TriggerMessag
     response.status = TriggerMessageStatusEnumType::Accepted;
 }
 
-/** @brief Fill the hash information of a certificat */
-void Iso15118Manager::fillHashInfo(const ocpp::x509::Certificate& certificate, ocpp::types::ocpp16::CertificateHashDataType& info)
+/** @brief Fill hash information using certificate and its issuer certificate */
+void Iso15118Manager::fillHashInfo(const ocpp::x509::Certificate& certificate,
+                                   const ocpp::x509::Certificate& issuer_certificate,
+                                   ocpp::types::ocpp16::CertificateHashDataType& info)
 {
     // Compute hashes with SHA-256 algorithm
     Sha2 sha256;
     info.hashAlgorithm = HashAlgorithmEnumType::SHA256;
     sha256.compute(certificate.issuerDer().data(), certificate.issuerDer().size());
     info.issuerNameHash.assign(sha256.resultString());
-    sha256.compute(&certificate.publicKey()[0], certificate.publicKey().size());
+
+    // issuerKeyHash must be computed from issuer certificate public key.
+    sha256.compute(issuer_certificate.publicKey().data(), issuer_certificate.publicKey().size());
     info.issuerKeyHash.assign(sha256.resultString());
     info.serialNumber.assign(certificate.serialNumberHexString());
 }
@@ -588,6 +620,20 @@ bool Iso15118Manager::verifyCertificateChain(const std::vector<ocpp::x509::Certi
     }
 
     return true;
+}
+
+/** @brief Find the issuer certificate by matching subject DN with issuer DN */
+const ocpp::x509::Certificate* Iso15118Manager::findIssuerCertificate(const ocpp::x509::Certificate& certificate, const std::vector<const ocpp::x509::Certificate*>& candidates)
+{
+    for (const ocpp::x509::Certificate* candidate : candidates)
+    {
+        if ((candidate != nullptr) && (candidate->subjectString() == certificate.issuerString()))
+        {
+            return candidate;
+        }
+    }
+
+    return nullptr;
 }
 
 } // namespace chargepoint

@@ -309,8 +309,10 @@ class Iso15118Manager : public IDataTransferManager::IDataTransferHandler
     void handle(const ocpp::messages::ocpp16::Iso15118TriggerMessageReq& request,
                 ocpp::messages::ocpp16::Iso15118TriggerMessageConf&      response);
 
-    /** @brief Fill the hash information of a certificat */
-    void fillHashInfo(const ocpp::x509::Certificate& certificate, ocpp::types::ocpp16::CertificateHashDataType& info);
+    /** @brief Fill hash information using certificate and its issuer certificate */
+    void fillHashInfo(const ocpp::x509::Certificate& certificate,
+                      const ocpp::x509::Certificate& issuer_certificate,
+                      ocpp::types::ocpp16::CertificateHashDataType& info);
 
     /** @brief Send a CSR request to sign an ISO15118 certificate */
     bool sendSignCertificate();
@@ -320,6 +322,9 @@ class Iso15118Manager : public IDataTransferManager::IDataTransferHandler
 
     /** @brief Verify a certificate chain */
     bool verifyCertificateChain(const std::vector<ocpp::x509::Certificate>& certificates);
+
+    /** @brief Find the issuer certificate of a given certificate in a list of candidates */
+    const ocpp::x509::Certificate* findIssuerCertificate(const ocpp::x509::Certificate& certificate, const std::vector<const ocpp::x509::Certificate*>& candidates);
 };
 
 } // namespace chargepoint
