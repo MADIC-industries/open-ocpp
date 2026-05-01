@@ -314,6 +314,12 @@ class Iso15118Manager : public IDataTransferManager::IDataTransferHandler
 
     /** @brief Send a CSR request to sign an ISO15118 certificate */
     bool sendSignCertificate();
+
+    /** @brief Extract certificates from a PEM chain */
+    bool extractCertificates(const std::string& pem_chain, std::vector<ocpp::x509::Certificate>& certificates);
+
+    /** @brief Verify a certificate chain */
+    bool verifyCertificateChain(const std::vector<ocpp::x509::Certificate>& certificates);
 };
 
 } // namespace chargepoint

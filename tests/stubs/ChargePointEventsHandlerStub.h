@@ -164,8 +164,8 @@ class ChargePointEventsHandlerStub : public ocpp::chargepoint::IChargePointEvent
     /** @copydoc bool IChargePointEventsHandler::iso15118CheckEvCertificate(const ocpp::x509::Certificate&) */
     bool iso15118CheckEvCertificate(const ocpp::x509::Certificate& certificate) override;
 
-    /** @copydoc bool IChargePointEventsHandler::iso15118ChargePointCertificateReceived(const ocpp::x509::Certificate&) */
-    bool iso15118ChargePointCertificateReceived(const ocpp::x509::Certificate& certificate) override;
+    /** @copydoc bool IChargePointEventsHandler::iso15118ChargePointCertificateReceived(const std::vector<ocpp::x509::Certificate>&) */
+    bool iso15118ChargePointCertificateReceived(const std::vector<ocpp::x509::Certificate>& certificates) override;
 
     /** @copydoc ocpp::types::ocpp16::DeleteCertificateStatusEnumType IChargePointEventsHandler::iso15118DeleteCertificate(ocpp::types::ocpp16::HashAlgorithmEnumType,
                                                                                                                    const std::string&,

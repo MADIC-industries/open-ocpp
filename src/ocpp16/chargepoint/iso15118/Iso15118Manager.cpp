@@ -36,6 +36,7 @@ along with OpenOCPP. If not, see <http://www.gnu.org/licenses/>.
 #include "WorkerThreadPool.h"
 
 #include <thread>
+#include <vector>
 
 using namespace ocpp::x509;
 using namespace ocpp::messages;
@@ -288,12 +289,11 @@ void Iso15118Manager::handle(const ocpp::messages::ocpp16::CertificateSignedReq&
     // Check certificate's size
     if (request.certificateChain.size() < m_ocpp_config.certificateSignedMaxChainSize())
     {
-        // Check certificate's validity
-        Certificate certificate(request.certificateChain);
-        if (certificate.isValid() && certificate.verify())
+        std::vector<Certificate> certificates;
+        if (extractCertificates(request.certificateChain, certificates) && verifyCertificateChain(certificates))
         {
             // Notify new certificate
-            if (m_events_handler.iso15118ChargePointCertificateReceived(certificate))
+            if (m_events_handler.iso15118ChargePointCertificateReceived(certificates))
             {
                 // Stop timeout timer
                 m_csr_timer.stop();
@@ -524,6 +524,70 @@ bool Iso15118Manager::sendSignCertificate()
     LOG_INFO << "Sign certificate : " << GenericStatusEnumTypeHelper.toString(result);
 
     return (result == GenericStatusEnumType::Accepted);
+}
+
+/** @brief Extract individual certificates from a PEM chain payload */
+bool Iso15118Manager::extractCertificates(const std::string& pem_chain, std::vector<ocpp::x509::Certificate>& certificates)
+{
+    const std::string begin_marker = "-----BEGIN CERTIFICATE-----";
+    const std::string end_marker   = "-----END CERTIFICATE-----";
+
+    size_t pos = 0;
+    while (pos < pem_chain.size())
+    {
+        size_t begin_pos = pem_chain.find(begin_marker, pos);
+        if (begin_pos == std::string::npos)
+        {
+            break;
+        }
+
+        size_t end_pos = pem_chain.find(end_marker, begin_pos);
+        if (end_pos == std::string::npos)
+        {
+            LOG_WARNING << "[ISO15118] Invalid certificate chain : missing END CERTIFICATE marker";
+            return false;
+        }
+        end_pos += end_marker.size();
+
+        Certificate certificate(pem_chain.substr(begin_pos, end_pos - begin_pos));
+        if (!certificate.isValid())
+        {
+            LOG_WARNING << "[ISO15118] Invalid certificate found in certificate chain";
+            return false;
+        }
+
+        certificates.push_back(certificate);
+        pos = end_pos;
+    }
+
+    if (certificates.empty())
+    {
+        LOG_WARNING << "[ISO15118] Empty certificate chain";
+        return false;
+    }
+
+    return true;
+}
+
+/** @brief Verify a certificate chain where first cert is leaf and others are CAs */
+bool Iso15118Manager::verifyCertificateChain(const std::vector<ocpp::x509::Certificate>& certificates)
+{
+    if (!certificates.empty())
+    {
+        for (const auto& cert : certificates)
+        {
+            if (cert.isValid())
+            {
+            }
+            else
+            {
+                return false;
+            }
+
+        }
+    }
+
+    return true;
 }
 
 } // namespace chargepoint

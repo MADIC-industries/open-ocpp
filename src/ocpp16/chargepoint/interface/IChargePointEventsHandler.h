@@ -322,7 +322,7 @@ class IChargePointEventsHandler
      * @param certificate Charge point certificate to install
      * @return true if the certificate has been installed, false otherwise
      */
-    virtual bool iso15118ChargePointCertificateReceived(const ocpp::x509::Certificate& certificate) = 0;
+    virtual bool iso15118ChargePointCertificateReceived(const std::vector<ocpp::x509::Certificate>& certificates) = 0;
 
     /**
      * @brief Called when the Central System request to delete an installed ISO15118 certificate

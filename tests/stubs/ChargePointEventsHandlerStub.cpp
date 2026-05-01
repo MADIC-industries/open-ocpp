@@ -318,10 +318,19 @@ bool ChargePointEventsHandlerStub::iso15118CheckEvCertificate(const ocpp::x509::
     return true;
 }
 
-/** @copydoc bool IChargePointEventsHandler::iso15118ChargePointCertificateReceived(const ocpp::x509::Certificate&) */
-bool ChargePointEventsHandlerStub::iso15118ChargePointCertificateReceived(const ocpp::x509::Certificate& certificate)
+/** @copydoc bool IChargePointEventsHandler::iso15118ChargePointCertificateReceived(const std::vector<ocpp::x509::Certificate>&) */
+bool ChargePointEventsHandlerStub::iso15118ChargePointCertificateReceived(const std::vector<ocpp::x509::Certificate>& certificates)
 {
-    m_calls["iso15118ChargePointCertificateReceived"] = {{"certificate", certificate.pem()}};
+    std::stringstream chain;
+    for (size_t i = 0; i < certificates.size(); i++)
+    {
+        if (i != 0u)
+        {
+            chain << "\n";
+        }
+        chain << certificates[i].pem();
+    }
+    m_calls["iso15118ChargePointCertificateReceived"] = {{"certificate_chain", chain.str()}};
     return true;
 }
 

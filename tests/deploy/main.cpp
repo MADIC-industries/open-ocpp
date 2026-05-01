@@ -887,13 +887,13 @@ class ChargePointEventsHandler : public IChargePointEventsHandler
     }
 
     /**
-     * @brief Called when an ISO15118 charge point certificate has been received and must be installed
-     * @param certificate Charge point certificate to install
+     * @brief Called when an ISO15118 charge point certificate chain has been received and must be installed
+     * @param certificates Charge point certificate chain to install
      * @return true if the certificate has been installed, false otherwise
      */
-    bool iso15118ChargePointCertificateReceived(const ocpp::x509::Certificate& certificate) override
+    bool iso15118ChargePointCertificateReceived(const std::vector<ocpp::x509::Certificate>& certificates) override
     {
-        (void)certificate;
+        (void)certificates;
         return true;
     }
 

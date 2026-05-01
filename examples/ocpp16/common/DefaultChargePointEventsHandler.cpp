@@ -745,35 +745,38 @@ bool DefaultChargePointEventsHandler::iso15118CheckEvCertificate(const ocpp::x50
     return ret;
 }
 
-/** @copydoc bool IChargePointEventsHandler::iso15118ChargePointCertificateReceived(const ocpp::x509::Certificate&) */
-bool DefaultChargePointEventsHandler::iso15118ChargePointCertificateReceived(const ocpp::x509::Certificate& certificate)
+/** @copydoc bool IChargePointEventsHandler::iso15118ChargePointCertificateReceived(const std::vector<ocpp::x509::Certificate>&) */
+bool DefaultChargePointEventsHandler::iso15118ChargePointCertificateReceived(const std::vector<ocpp::x509::Certificate>& certificates)
 {
     std::string ca_filename;
     bool        ret = false;
 
-    cout << "ISO15118 Charge point certificate installation requested : certificate subject = " << certificate.subjectString() << endl;
 
-    // Compute SHA256 to generate filename
-    Sha2 sha256;
-    sha256.compute(certificate.pem().c_str(), certificate.pem().size());
+    for (const auto& certificate : certificates) {
+        cout << "ISO15118 Charge point certificate installation requested : certificate subject = " << certificate.subjectString() << endl;
 
-    std::stringstream name;
-    name << "iso_cp_" << sha256.resultString() << ".pem";
-    std::string cert_filename = (m_working_dir / name.str()).string();
+        // Compute SHA256 to generate filename
+        Sha2 sha256;
+        sha256.compute(certificate.pem().c_str(), certificate.pem().size());
 
-    // Save certificate
-    if (certificate.toFile(cert_filename))
-    {
-        // Retrieve and save the corresponding key/pair with the new certificate
-        std::string cert_key_filename = cert_filename + ".key";
-        std::filesystem::copy("/tmp/charge_point_key.key", cert_key_filename);
+        std::stringstream name;
+        name << "iso_cp_" << sha256.resultString() << ".pem";
+        std::string cert_filename = (m_working_dir / name.str()).string();
 
-        cout << "Certificate saved : " << cert_filename << endl;
-        ret = true;
-    }
-    else
-    {
-        cout << "Unable to save certificate : " << cert_filename << endl;
+        // Save certificate
+        if (certificate.toFile(cert_filename))
+        {
+            // Retrieve and save the corresponding key/pair with the new certificate
+            std::string cert_key_filename = cert_filename + ".key";
+            std::filesystem::copy("/tmp/charge_point_key.key", cert_key_filename);
+
+            cout << "Certificate saved : " << cert_filename << endl;
+            ret = true;
+        }
+        else
+        {
+            cout << "Unable to save certificate : " << cert_filename << endl;
+        }
     }
 
     return ret;
