@@ -491,5 +491,40 @@ bool Certificate::verify(const Certificate& certificate, const std::vector<Certi
 
     return ret;
 }
+
+std::vector<Certificate> Certificate::certificatesFromString(const std::string& data)
+{
+    std::vector<Certificate> certificates;
+
+    // Extract every individual certificate from the provided PEM data using OpenSSL
+    BIO* bio = BIO_new_mem_buf(data.c_str(), static_cast<int>(data.size()));
+    if (bio)
+    {
+        X509* cert = nullptr;
+        while ((cert = PEM_read_bio_X509(bio, nullptr, nullptr, nullptr)) != nullptr)
+        {
+            // Re-encode the parsed certificate as a standalone PEM block
+            BIO* out = BIO_new(BIO_s_mem());
+            if (out)
+            {
+                if (PEM_write_bio_X509(out, cert) == 1)
+                {
+                    char* out_data = nullptr;
+                    int   out_len  = BIO_get_mem_data(out, &out_data);
+                    if ((out_data != nullptr) && (out_len > 0))
+                    {
+                        certificates.emplace_back(std::string(out_data, static_cast<size_t>(out_len)));
+                    }
+                }
+                BIO_free(out);
+            }
+            X509_free(cert);
+        }
+        BIO_free(bio);
+    }
+
+    return certificates;
+}
+
 } // namespace x509
 } // namespace ocpp

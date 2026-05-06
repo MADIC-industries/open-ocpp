@@ -78,7 +78,7 @@ Iso15118Manager::~Iso15118Manager() { }
 
 /** @brief Authorize an ISO15118 transaction */
 ocpp::types::ocpp16::AuthorizationStatus Iso15118Manager::authorize(
-    const ocpp::x509::Certificate&                                                  certificate,
+    std::vector<ocpp::x509::Certificate> const &certificates,
     const std::string&                                                              id_token,
     const std::vector<ocpp::types::ocpp16::OcspRequestDataType>&                    cert_hash_data,
     ocpp::types::Optional<ocpp::types::ocpp16::AuthorizeCertificateStatusEnumType>& cert_status)
@@ -89,7 +89,7 @@ ocpp::types::ocpp16::AuthorizationStatus Iso15118Manager::authorize(
 
     // Check certificate
     bool cert_valid = false;
-    cert_valid      = m_events_handler.iso15118CheckEvCertificate(certificate);
+    cert_valid      = m_events_handler.iso15118CheckEvCertificate(certificates);
     if (!cert_valid)
     {
         LOG_WARNING << "EV certificate couldn't be verified";
@@ -103,10 +103,14 @@ ocpp::types::ocpp16::AuthorizationStatus Iso15118Manager::authorize(
         {
             // Prepare request
             Iso15118AuthorizeReq request;
-            if (!cert_valid)
-            {
-                request.certificate.value().assign(certificate.pem());
+            if (!certificates.empty()) {
+                std::string certificate_pem;
+                for (const auto& cert : certificates) {
+                    certificate_pem += cert.pem();
+                }
+                request.certificate.value().assign(certificate_pem);
             }
+
             request.idToken.assign(id_token);
             request.iso15118CertificateHashData = cert_hash_data;
 

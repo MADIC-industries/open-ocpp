@@ -663,12 +663,24 @@ void ChargePointHandler::handleMessage(const ocpp::messages::ocpp16::Iso15118Aut
              << " -  certificate = " << (request.certificate.isSet() ? std::to_string(request.certificate.value().size()) : "not set");
 
     // Load certificate
-    ocpp::x509::Certificate certificate(request.certificate.value());
-    if (!request.certificate.isSet() || certificate.isValid())
+    std::string certificates_pem;
+    if (request.certificate.isSet())
     {
+        certificates_pem = request.certificate.value();
+    }
+    if (!certificates_pem.empty())
+    {
+        std::vector<ocpp::x509::Certificate> certificates = ocpp::x509::Certificate::certificatesFromString(certificates_pem);
+        if (certificates.empty())        {
+            LOG_ERROR << "[" << m_identifier << "] - [ISO15118] Failed to load certificate from request";
+            response.certificateStatus  = AuthorizeCertificateStatusEnumType::CertChainError;
+            response.idTokenInfo.status = AuthorizationStatus::Invalid;
+            LOG_INFO << "[" << m_identifier << "] - [ISO15118] Authorize status : " << AuthorizationStatusHelper.toString(response.idTokenInfo.status);
+            return;
+        }
         // Notify request
         response.idTokenInfo =
-            m_handler->iso15118Authorize(certificate, request.idToken, request.iso15118CertificateHashData, response.certificateStatus);
+            m_handler->iso15118Authorize(certificates, request.idToken, request.iso15118CertificateHashData, response.certificateStatus);
     }
     else
     {

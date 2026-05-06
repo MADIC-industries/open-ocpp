@@ -67,6 +67,14 @@ class DefaultChargePointEventsHandler : public ocpp::chargepoint::IChargePointEv
     ocpp::types::ocpp16::AvailabilityStatus changeAvailabilityRequested(unsigned int                          connector_id,
                                                                         ocpp::types::ocpp16::AvailabilityType availability) override;
 
+    /** @copydoc std::tuple<...> IChargePointEventsHandler::getConnectorStatus(unsigned int) */
+    std::tuple<ocpp::types::ocpp16::ChargePointStatus,
+               ocpp::types::ocpp16::ChargePointErrorCode,
+               std::string,
+               std::string,
+               std::string>
+        getConnectorStatus(unsigned int connector_id) override;
+
     /** @copydoc int IChargePointEventsHandler::getTxStartStopMeterValue(unsigned int) */
     int getTxStartStopMeterValue(unsigned int connector_id) override;
 
@@ -175,7 +183,7 @@ class DefaultChargePointEventsHandler : public ocpp::chargepoint::IChargePointEv
     // ISO 15118 PnC extensions
 
     /** @copydoc bool IChargePointEventsHandler::iso15118CheckEvCertificate(const ocpp::x509::Certificate&) */
-    bool iso15118CheckEvCertificate(const ocpp::x509::Certificate& certificate) override;
+    bool iso15118CheckEvCertificate(std::vector<ocpp::x509::Certificate> const &certificates) override;
 
     /** @copydoc bool IChargePointEventsHandler::iso15118ChargePointCertificateReceived(const std::vector<ocpp::x509::Certificate>&) */
     bool iso15118ChargePointCertificateReceived(const std::vector<ocpp::x509::Certificate>& certificates) override;

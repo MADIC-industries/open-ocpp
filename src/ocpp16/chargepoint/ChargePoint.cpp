@@ -804,7 +804,7 @@ bool ChargePoint::notifySignedUpdateFirmwareStatus(ocpp::types::ocpp16::Firmware
                                                                     const std::vector<ocpp::types::ocpp16::OcspRequestDataType>&,
                                                                     ocpp::types::Optional<ocpp::types::ocpp16::AuthorizeCertificateStatusEnumType>&) */
 ocpp::types::ocpp16::AuthorizationStatus ChargePoint::iso15118Authorize(
-    const ocpp::x509::Certificate&                                                  certificate,
+    const std::vector<ocpp::x509::Certificate>&                                     certificates,
     const std::string&                                                              id_token,
     const std::vector<ocpp::types::ocpp16::OcspRequestDataType>&                    cert_hash_data,
     ocpp::types::Optional<ocpp::types::ocpp16::AuthorizeCertificateStatusEnumType>& cert_status)
@@ -815,7 +815,7 @@ ocpp::types::ocpp16::AuthorizationStatus ChargePoint::iso15118Authorize(
     {
         if (m_status_manager->getRegistrationStatus() != RegistrationStatus::Rejected)
         {
-            ret = m_iso15118_manager->authorize(certificate, id_token, cert_hash_data, cert_status);
+            ret = m_iso15118_manager->authorize(certificates, id_token, cert_hash_data, cert_status);
         }
         else
         {
