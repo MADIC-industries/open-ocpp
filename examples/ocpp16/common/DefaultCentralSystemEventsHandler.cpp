@@ -493,12 +493,12 @@ void DefaultCentralSystemEventsHandler::ChargePointRequestHandler::signedFirmwar
                                                           const std::vector<ocpp::types::ocpp16::OcspRequestDataType>&,
                                                           ocpp::types::Optional<ocpp::types::ocpp16::AuthorizeCertificateStatusEnumType>&) override; */
 ocpp::types::ocpp16::IdTokenInfoType DefaultCentralSystemEventsHandler::ChargePointRequestHandler::iso15118Authorize(
-    const ocpp::x509::Certificate&                                                  certificate,
+    const std::vector<ocpp::x509::Certificate>&                                     certificates,
     const std::string&                                                              id_token,
     const std::vector<ocpp::types::ocpp16::OcspRequestDataType>&                    cert_hash_data,
     ocpp::types::Optional<ocpp::types::ocpp16::AuthorizeCertificateStatusEnumType>& cert_status)
 {
-    cout << "[" << m_chargepoint->identifier() << "] - [ISO15118] Authorize : certificate = " << certificate.pem().size()
+    cout << "[" << m_chargepoint->identifier() << "] - [ISO15118] Authorize : certificate = " << certificates.front().pem().size()
          << " - id_token = " << id_token << " - cert_hash_data size = " << cert_hash_data.size() << endl;
 
     // Prepare response
@@ -506,7 +506,7 @@ ocpp::types::ocpp16::IdTokenInfoType DefaultCentralSystemEventsHandler::ChargePo
     ret.status = AuthorizationStatus::Invalid;
 
     // Check certificate if present
-    if (certificate.isValid())
+    if (certificates.front().isValid())
     {
         cert_status = AuthorizeCertificateStatusEnumType::Accepted;
         ret.status  = AuthorizationStatus::Accepted;

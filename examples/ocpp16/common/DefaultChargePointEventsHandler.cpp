@@ -101,6 +101,22 @@ ocpp::types::ocpp16::AvailabilityStatus DefaultChargePointEventsHandler::changeA
     return AvailabilityStatus::Accepted;
 }
 
+/** @copydoc std::tuple<...> IChargePointEventsHandler::getConnectorStatus(unsigned int) */
+std::tuple<ocpp::types::ocpp16::ChargePointStatus,
+           ocpp::types::ocpp16::ChargePointErrorCode,
+           std::string,
+           std::string,
+           std::string>
+    DefaultChargePointEventsHandler::getConnectorStatus(unsigned int connector_id)
+{
+    cout << "Get connector status for connector " << connector_id << endl;
+    return std::make_tuple(ocpp::types::ocpp16::ChargePointStatus::Available,
+                           ocpp::types::ocpp16::ChargePointErrorCode::NoError,
+                           std::string{},
+                           std::string{},
+                           std::string{});
+}
+
 /** @copydoc int IChargePointEventsHandler::getTxStartStopMeterValue(unsigned int) */
 int DefaultChargePointEventsHandler::getTxStartStopMeterValue(unsigned int connector_id)
 {
@@ -715,31 +731,32 @@ ocpp::types::ocpp16::UpdateFirmwareStatusEnumType DefaultChargePointEventsHandle
 // ISO 15118 PnC extensions
 
 /** @copydoc bool IChargePointEventsHandler::iso15118CheckEvCertificate(const ocpp::x509::Certificate&) */
-bool DefaultChargePointEventsHandler::iso15118CheckEvCertificate(const ocpp::x509::Certificate& certificate)
+bool DefaultChargePointEventsHandler::iso15118CheckEvCertificate(std::vector<ocpp::x509::Certificate> const &certificates)
 {
     bool ret = false;
 
-    cout << "ISO15118 EV certificate verification requested : certificate subject = " << certificate.subjectString() << endl;
+    for (const auto& certificate : certificates) {
+        cout << "ISO15118 EV certificate verification requested : certificate subject = " << certificate.subjectString() << endl;
 
-    // Look for MO certificates
-    for (auto const& dir_entry : std::filesystem::directory_iterator{m_working_dir})
-    {
-        if (!dir_entry.is_directory())
+        // Look for MO certificates
+        for (auto const& dir_entry : std::filesystem::directory_iterator{m_working_dir})
         {
-            std::string filename = dir_entry.path().filename().string();
-            if (ocpp::helpers::startsWith(filename, "iso_mo_root_") && ocpp::helpers::endsWith(filename, ".pem"))
+            if (!dir_entry.is_directory())
             {
-                Certificate mo_cert(dir_entry.path());
-                if (certificate.verify(mo_cert.certificateChain()))
+                std::string filename = dir_entry.path().filename().string();
+                if (ocpp::helpers::startsWith(filename, "iso_mo_root_") && ocpp::helpers::endsWith(filename, ".pem"))
                 {
-                    cout << "Validated against certificate : " << mo_cert.subjectString() << endl;
-                    ret = true;
-                    break;
+                    Certificate mo_cert(dir_entry.path());
+                    if (certificate.verify(mo_cert.certificateChain()))
+                    {
+                        cout << "Validated against certificate : " << mo_cert.subjectString() << endl;
+                        ret = true;
+                        break;
+                    }
                 }
             }
         }
     }
-
     cout << "EV certificate validated : " << (ret ? "yes" : "no") << endl;
 
     return ret;

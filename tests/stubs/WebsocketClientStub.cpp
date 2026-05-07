@@ -60,7 +60,8 @@ bool WebsocketClientStub::connect(const std::string&        url,
                                   const Credentials&        credentials,
                                   std::chrono::milliseconds connect_timeout,
                                   std::chrono::milliseconds retry_interval,
-                                  std::chrono::milliseconds ping_interval)
+                                  std::chrono::milliseconds ping_interval,
+                                  const std::string&        iface)
 {
     m_connect_called  = true;
     m_url             = url;

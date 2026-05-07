@@ -880,9 +880,9 @@ class ChargePointEventsHandler : public IChargePointEventsHandler
      * @param certificate EV certificate to check
      * @return true if the certificate has been validated against an installed MO certificate, false otherwise
      */
-    bool iso15118CheckEvCertificate(const ocpp::x509::Certificate& certificate) override
+    bool iso15118CheckEvCertificate(std::vector<ocpp::x509::Certificate> const &certificates) override
     {
-        (void)certificate;
+        (void)certificates;
         return true;
     }
 

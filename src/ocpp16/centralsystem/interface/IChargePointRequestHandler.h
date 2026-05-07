@@ -211,7 +211,7 @@ class IChargePointRequestHandler
      * @return Authorization status (see AuthorizationStatus type)
     */
     virtual ocpp::types::ocpp16::IdTokenInfoType iso15118Authorize(
-        const ocpp::x509::Certificate&                                                  certificate,
+        const std::vector<ocpp::x509::Certificate>&                                     certificates,
         const std::string&                                                              id_token,
         const std::vector<ocpp::types::ocpp16::OcspRequestDataType>&                    cert_hash_data,
         ocpp::types::Optional<ocpp::types::ocpp16::AuthorizeCertificateStatusEnumType>& cert_status) = 0;

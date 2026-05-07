@@ -184,7 +184,9 @@ int main(int argc, char* argv[])
             for (unsigned int connector_id = 1; connector_id <= config.ocppConfig().numberOfConnectors(); connector_id++)
             {
                 // Ask for authorization on a token and a certificate
+                std::vector<Certificate> ev_certificates;
                 Certificate                                  ev_certificate(ev_cert_path);
+                ev_certificates.push_back(ev_certificate);
                 std::vector<OcspRequestDataType>             cert_hash_data;
                 Optional<AuthorizeCertificateStatusEnumType> cert_status;
                 ocsp_request.hashAlgorithm = HashAlgorithmEnumType::SHA384;
@@ -193,7 +195,7 @@ int main(int argc, char* argv[])
                 ocsp_request.responderURL.assign("https://open-ocpp.org");
                 ocsp_request.serialNumber.assign("S/N12345678");
                 cert_hash_data.emplace_back(ocsp_request);
-                AuthorizationStatus status = charge_point->iso15118Authorize(ev_certificate, token_id, cert_hash_data, cert_status);
+                AuthorizationStatus status = charge_point->iso15118Authorize(ev_certificates, token_id, cert_hash_data, cert_status);
                 if (status == AuthorizationStatus::Accepted)
                 {
                     int transaction_id = 0;

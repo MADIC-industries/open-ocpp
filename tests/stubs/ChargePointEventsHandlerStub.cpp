@@ -79,6 +79,22 @@ ocpp::types::ocpp16::AvailabilityStatus ChargePointEventsHandlerStub::changeAvai
     return m_availability_status;
 }
 
+/** @copydoc std::tuple<...> IChargePointEventsHandler::getConnectorStatus(unsigned int) */
+std::tuple<ocpp::types::ocpp16::ChargePointStatus,
+           ocpp::types::ocpp16::ChargePointErrorCode,
+           std::string,
+           std::string,
+           std::string>
+    ChargePointEventsHandlerStub::getConnectorStatus(unsigned int connector_id)
+{
+    m_calls["getConnectorStatus"] = {{"connector_id", std::to_string(connector_id)}};
+    return std::make_tuple(ocpp::types::ocpp16::ChargePointStatus::Available,
+                           ocpp::types::ocpp16::ChargePointErrorCode::NoError,
+                           std::string{},
+                           std::string{},
+                           std::string{});
+}
+
 /** @copydoc int IChargePointEventsHandler::getTxStartStopMeterValue(unsigned int) */
 int ChargePointEventsHandlerStub::getTxStartStopMeterValue(unsigned int connector_id)
 {
@@ -312,9 +328,18 @@ ocpp::types::ocpp16::UpdateFirmwareStatusEnumType ChargePointEventsHandlerStub::
 // ISO 15118 PnC extensions
 
 /** @copydoc bool IChargePointEventsHandler::iso15118CheckEvCertificate(const ocpp::x509::Certificate&) */
-bool ChargePointEventsHandlerStub::iso15118CheckEvCertificate(const ocpp::x509::Certificate& certificate)
+bool ChargePointEventsHandlerStub::iso15118CheckEvCertificate(std::vector<ocpp::x509::Certificate> const &certificates)
 {
-    m_calls["iso15118CheckEvCertificate"] = {{"certificate", certificate.pem()}};
+    std::stringstream chain;
+    for (size_t i = 0; i < certificates.size(); i++)
+    {
+        if (i != 0u)
+        {
+            chain << "\n";
+        }
+        chain << certificates[i].pem();
+    }
+    m_calls["iso15118CheckEvCertificate"] = {{"certificate_chain", chain.str()}};
     return true;
 }
 

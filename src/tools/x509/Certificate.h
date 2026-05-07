@@ -114,6 +114,12 @@ class Certificate : public X509Document
      */
     bool verify(const std::vector<uint8_t>& signature, const std::string& filepath, Sha2::Type sha);
 
+    /** @brief Get all certificates contains in data string
+     *  @param data PEM encoded data string containing one or more certificates
+     *  @return Certificates composing the certificate
+     */
+    static std::vector<Certificate> certificatesFromString(const std::string& data);
+
     /**
      * @brief Get the PEM encoded data representation of each certificate composing the certificate chain (if any)
      * @return PEM encoded data representation of each certificate composing the certificate chain (if any)
@@ -212,6 +218,10 @@ class Certificate : public X509Document
 
     /** @brief Extract all the PEM certificates in the certificate chain */
     void extractPemChain();
+
+    /** @brief Extract Multiple certificates from a PEM encoded data string */
+    void extractCertificatesFromPem(const std::string& pem_data);
+
     /** @brief Converts a certificate request to a certificate */
     void convertCertificateRequest(void* request, const void* issuer, void* key, Sha2::Type sha, unsigned int days);
 

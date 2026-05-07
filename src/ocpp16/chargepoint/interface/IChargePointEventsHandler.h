@@ -315,7 +315,7 @@ class IChargePointEventsHandler
      * @param certificate EV certificate to check
      * @return true if the certificate has been validated against an installed MO certificate, false otherwise
      */
-    virtual bool iso15118CheckEvCertificate(const ocpp::x509::Certificate& certificate) = 0;
+    virtual bool iso15118CheckEvCertificate(std::vector<ocpp::x509::Certificate> const &certificates) = 0;
 
     /**
      * @brief Called when an ISO15118 charge point certificate has been received and must be installed

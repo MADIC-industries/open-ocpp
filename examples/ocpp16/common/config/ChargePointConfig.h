@@ -86,6 +86,8 @@ class ChargePointConfig : public ocpp::config::IChargePointConfig
     /** @brief Skip server name check in certificates for TLS connections
      *         (Warning : enabling this feature is not recommended in production) */
     bool tlsSkipServerNameCheck() const override { return getBool("TlsSkipServerNameCheck"); }
+    /** @brief Network interface to use */
+    std::string iface() const override { return getString("Interface"); }
 
     // Charge point identification
 
@@ -135,14 +137,14 @@ class ChargePointConfig : public ocpp::config::IChargePointConfig
     virtual std::string clientCertificateRequestHashType() const override { return getString("ClientCertificateRequestHashType"); }
     /** @brief Key type for certificate request generation : ec or rsa */
     virtual std::string clientCertificateRequestKeyType() const override { return getString("ClientCertificateRequestKeyType"); }
-    /** @brief Length in bits of the key for certificate request generation 
+    /** @brief Length in bits of the key for certificate request generation
      *         if rsa has been selected for key type : minimum 2048 */
     virtual unsigned int clientCertificateRequestRsaKeyLength() const override
     {
         return get<unsigned int>("ClientCertificateRequestRsaKeyLength");
     };
-    /** @brief Name of the elliptic curve for certificate request generation 
-     *         if ec has been selected for key type : prime256v1, secp256k1, secp384r1, secp521r1, 
+    /** @brief Name of the elliptic curve for certificate request generation
+     *         if ec has been selected for key type : prime256v1, secp256k1, secp384r1, secp521r1,
      *         brainpoolP256t1, brainpoolP384t1 or brainpoolP512t1 */
     virtual std::string clientCertificateRequestEcCurve() const override { return getString("ClientCertificateRequestEcCurve"); }
     /** @brief Country for the subject field of certificate request generation (can be left empty) */

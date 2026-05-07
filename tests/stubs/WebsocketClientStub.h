@@ -47,7 +47,8 @@ class WebsocketClientStub : public IWebsocketClient
                  const Credentials&        credentials,
                  std::chrono::milliseconds connect_timeout,
                  std::chrono::milliseconds retry_interval,
-                 std::chrono::milliseconds ping_interval) override;
+                 std::chrono::milliseconds ping_interval,
+                 const std::string& iface) override;
 
     /** @copydoc bool IWebsocketClient::disconnect() */
     bool disconnect() override;
