@@ -437,7 +437,41 @@ bool SecurityManager::handleMessage(const ocpp::messages::ocpp16::CertificateSig
     {
         // Check certificate's validity
         Certificate certificate(request.certificateChain);
-        if (certificate.isValid() && certificate.verify())
+        bool is_valid = certificate.isValid();
+
+        // Verify certificate against installed CA certificates
+        bool is_verified = false;
+        if (is_valid)
+        {
+            if (certificate.verify())
+            {
+                // Self-verifying chain
+                is_verified = true;
+            }
+            else
+            {
+                if (m_stack_config.internalCertificateManagementEnabled())
+                {
+                    // Verify against CA certificate installed in the database
+                    std::string ca_certs_pem = m_ca_certificates_db.getCertificateListPem(CertificateUseEnumType::CentralSystemRootCertificate);
+                    if (!ca_certs_pem.empty())
+                    {
+                        Certificate ca_cert(ca_certs_pem);
+                        if (ca_cert.isValid() && certificate.verify(ca_cert.certificateChain()))
+                        {
+                            is_verified = true;
+                        }
+                    }
+                }
+                else
+                {
+                    // Notify application to verify the certificate
+                    is_verified = m_events_handler.chargePointVerifyCertificate(certificate);
+                }
+            }
+        }
+
+        if (is_valid && is_verified)
         {
             if (m_stack_config.internalCertificateManagementEnabled())
             {
@@ -482,6 +516,17 @@ bool SecurityManager::handleMessage(const ocpp::messages::ocpp16::CertificateSig
                     response.status     = CertificateSignedStatusEnumType::Accepted;
                     send_security_event = false;
                 }
+            }
+        }
+        else
+        {
+            if (!is_valid)
+            {
+                LOG_ERROR << "Invalid certificate received";
+            }
+            else
+            {
+                LOG_ERROR << "Certificate verification failed";
             }
         }
     }

@@ -145,6 +145,9 @@ class DefaultChargePointEventsHandler : public ocpp::chargepoint::IChargePointEv
     /** @copydoc bool IChargePointEventsHandler::chargePointCertificateReceived(const ocpp::x509::Certificate&) */
     bool chargePointCertificateReceived(const ocpp::x509::Certificate& certificate) override;
 
+    /** @copydoc bool IChargePointEventsHandler::chargePointVerifyCertificate(const ocpp::x509::Certificate&) */
+    bool chargePointVerifyCertificate(const ocpp::x509::Certificate& certificate) override;
+
     /** @copydoc ocpp::types::ocpp16::DeleteCertificateStatusEnumType IChargePointEventsHandler::deleteCertificate(ocpp::types::ocpp16::HashAlgorithmEnumType,
                                                                                                            const std::string&,
                                                                                                            const std::string&,

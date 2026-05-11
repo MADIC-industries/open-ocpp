@@ -67,11 +67,66 @@ class X509Document
         unsigned int path_length;
     };
 
+    /** @brief Contains Key Usage extension data */
+    struct KeyUsage
+    {
+        /** @brief Constructor */
+        KeyUsage() : present(false), digital_signature(false), key_agreement(false), key_encipherment(false),
+                     data_encipherment(false), key_cert_sign(false), crl_sign(false), encipher_only(false),
+                     decipher_only(false) { }
+
+        /** @brief Indicate if the extension is present */
+        bool present;
+        /** @brief Digital signature */
+        bool digital_signature;
+        /** @brief Key agreement */
+        bool key_agreement;
+        /** @brief Key encipherment */
+        bool key_encipherment;
+        /** @brief Data encipherment */
+        bool data_encipherment;
+        /** @brief Certificate signing */
+        bool key_cert_sign;
+        /** @brief CRL signing */
+        bool crl_sign;
+        /** @brief Encipher only */
+        bool encipher_only;
+        /** @brief Decipher only */
+        bool decipher_only;
+    };
+
+    /** @brief Contains Extended Key Usage extension data */
+    struct ExtendedKeyUsage
+    {
+        /** @brief Constructor */
+        ExtendedKeyUsage() : present(false), server_auth(false), client_auth(false), code_signing(false),
+                             email_protection(false), time_stamping(false), ocsp_signing(false) { }
+
+        /** @brief Indicate if the extension is present */
+        bool present;
+        /** @brief TLS server authentication */
+        bool server_auth;
+        /** @brief TLS client authentication */
+        bool client_auth;
+        /** @brief Code signing */
+        bool code_signing;
+        /** @brief Email protection */
+        bool email_protection;
+        /** @brief Time stamping */
+        bool time_stamping;
+        /** @brief OCSP signing */
+        bool ocsp_signing;
+    };
+
     /** @brief Contains X509v3 extensions */
     struct Extensions
     {
         /** @brief Basic constraints */
         BasicConstraints basic_constraints;
+        /** @brief Key usage */
+        KeyUsage key_usage;
+        /** @brief Extended key usage */
+        ExtendedKeyUsage extended_key_usage;
         /** @brief Issuer alternate names */
         std::vector<std::string> issuer_alternate_names;
         /** @brief Subject alternate names */

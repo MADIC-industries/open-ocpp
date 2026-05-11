@@ -490,6 +490,13 @@ bool DefaultChargePointEventsHandler::chargePointCertificateReceived(const ocpp:
     return ret;
 }
 
+/** @copydoc bool IChargePointEventsHandler::chargePointVerifyCertificate(const ocpp::x509::Certificate&) */
+bool DefaultChargePointEventsHandler::chargePointVerifyCertificate(const ocpp::x509::Certificate& certificate)
+{
+    // Default implementation always returns true
+    return true;
+}
+
 /** @copydoc ocpp::types::ocpp16::DeleteCertificateStatusEnumType IChargePointEventsHandler::deleteCertificate(ocpp::types::ocpp16::HashAlgorithmEnumType,
                                                                                                            const std::string&,
                                                                                                            const std::string&,

@@ -240,6 +240,14 @@ class IChargePointEventsHandler
     virtual bool chargePointCertificateReceived(const ocpp::x509::Certificate& certificate) = 0;
 
     /**
+     * @brief Called to verify a charge point certificate
+     *        (Not used if InternalCertificateManagementEnabled = true)
+     * @param certificate Charge point certificate to verify
+     * @return true if the certificate is valid, false otherwise
+     */
+    virtual bool chargePointVerifyCertificate(const ocpp::x509::Certificate& certificate) = 0;
+
+    /**
      * @brief Called when the Central System request to delete an installed CA certificate
      *        (Not used if InternalCertificateManagementEnabled = true)
      * @param hash_algorithm Hash algorithm used for the following parameters

@@ -302,6 +302,78 @@ void CertificateRequest::create(const Subject& subject, const Extensions& extens
         sk_GENERAL_NAME_pop_free(names, GENERAL_NAME_free);
     }
 
+    // Key usage
+    if (extensions.key_usage.present)
+    {
+        ASN1_BIT_STRING* key_usage = ASN1_BIT_STRING_new();
+        if (extensions.key_usage.digital_signature)
+        {
+            ASN1_BIT_STRING_set_bit(key_usage, 0, 1);
+        }
+        if (extensions.key_usage.key_encipherment)
+        {
+            ASN1_BIT_STRING_set_bit(key_usage, 2, 1);
+        }
+        if (extensions.key_usage.data_encipherment)
+        {
+            ASN1_BIT_STRING_set_bit(key_usage, 3, 1);
+        }
+        if (extensions.key_usage.key_agreement)
+        {
+            ASN1_BIT_STRING_set_bit(key_usage, 4, 1);
+        }
+        if (extensions.key_usage.key_cert_sign)
+        {
+            ASN1_BIT_STRING_set_bit(key_usage, 5, 1);
+        }
+        if (extensions.key_usage.crl_sign)
+        {
+            ASN1_BIT_STRING_set_bit(key_usage, 6, 1);
+        }
+        if (extensions.key_usage.encipher_only)
+        {
+            ASN1_BIT_STRING_set_bit(key_usage, 7, 1);
+        }
+        if (extensions.key_usage.decipher_only)
+        {
+            ASN1_BIT_STRING_set_bit(key_usage, 8, 1);
+        }
+        X509V3_add1_i2d(&exts, NID_key_usage, key_usage, 1, 0); // 1 = critical
+        ASN1_BIT_STRING_free(key_usage);
+    }
+
+    // Extended key usage
+    if (extensions.extended_key_usage.present)
+    {
+        STACK_OF(ASN1_OBJECT)* ext_key_usage = sk_ASN1_OBJECT_new_null();
+        if (extensions.extended_key_usage.server_auth)
+        {
+            sk_ASN1_OBJECT_push(ext_key_usage, OBJ_nid2obj(NID_server_auth));
+        }
+        if (extensions.extended_key_usage.client_auth)
+        {
+            sk_ASN1_OBJECT_push(ext_key_usage, OBJ_nid2obj(NID_client_auth));
+        }
+        if (extensions.extended_key_usage.code_signing)
+        {
+            sk_ASN1_OBJECT_push(ext_key_usage, OBJ_nid2obj(NID_code_sign));
+        }
+        if (extensions.extended_key_usage.email_protection)
+        {
+            sk_ASN1_OBJECT_push(ext_key_usage, OBJ_nid2obj(NID_email_protect));
+        }
+        if (extensions.extended_key_usage.time_stamping)
+        {
+            sk_ASN1_OBJECT_push(ext_key_usage, OBJ_nid2obj(NID_time_stamp));
+        }
+        if (extensions.extended_key_usage.ocsp_signing)
+        {
+            sk_ASN1_OBJECT_push(ext_key_usage, OBJ_nid2obj(NID_OCSP_sign));
+        }
+        X509V3_add1_i2d(&exts, NID_ext_key_usage, ext_key_usage, 0, 0);
+        sk_ASN1_OBJECT_pop_free(ext_key_usage, ASN1_OBJECT_free);
+    }
+
     // Add extensions to request
     if (exts)
     {

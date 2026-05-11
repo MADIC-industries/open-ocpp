@@ -259,6 +259,13 @@ bool ChargePointEventsHandlerStub::chargePointCertificateReceived(const ocpp::x5
     return m_call_results["chargePointCertificateReceived"];
 }
 
+/** @copydoc bool IChargePointEventsHandler::chargePointVerifyCertificate(const ocpp::x509::Certificate&) */
+bool ChargePointEventsHandlerStub::chargePointVerifyCertificate(const ocpp::x509::Certificate& certificate)
+{
+    m_calls["chargePointVerifyCertificate"] = {{"certificate", certificate.pem()}};
+    return m_call_results["chargePointVerifyCertificate"];
+}
+
 /** @copydoc ocpp::types::ocpp16::DeleteCertificateStatusEnumType IChargePointEventsHandler::deleteCertificate(ocpp::types::ocpp16::HashAlgorithmEnumType,
                                                                                                            const std::string&,
                                                                                                            const std::string&,
