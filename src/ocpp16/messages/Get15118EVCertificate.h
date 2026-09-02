@@ -43,7 +43,7 @@ struct Get15118EVCertificateReq
     /** @brief Required. Defines whether certificate needs to be installed or updated */
     ocpp::types::ocpp16::CertificateActionEnumType action;
     /** @brief Required. Raw CertificateInstallationReq request from EV, Base64 encoded */
-    ocpp::types::CiStringType<5600u> exiRequest;
+    ocpp::types::CiStringType<17000u> exiRequest;
 };
 
 /** @brief Get15118EVCertificate.conf message */
@@ -52,7 +52,7 @@ struct Get15118EVCertificateConf
     /** @brief Required. Indicates whether the message was processed properly */
     ocpp::types::ocpp16::Iso15118EVCertificateStatusEnumType status;
     /** @brief Required. Raw CertificateInstallationRes response for the EV, Base64 encoded */
-    ocpp::types::CiStringType<5600u> exiResponse;
+    ocpp::types::CiStringType<17000u> exiResponse;
 };
 
 // Message converters
