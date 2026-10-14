@@ -104,6 +104,15 @@ class AuthentLocalList
     */
     bool performPartialUpdate(const std::vector<ocpp::types::ocpp16::AuthorizationData>& authorization_datas);
 
+    /**
+     * @brief Update the local list from the charge point (not from the Central System): the list version is changed
+     *        so that the Central System sees that its list isn't the one of the charge point anymore and sends a full
+     *        update (0 if the list is now empty, as defined by OCPP, the next version otherwise)
+     * @param authorization_datas List of the authorization data to update in the local list (no IdTagInfo to delete)
+     * @return true if the local list has been updated, false otherwise
+     */
+    bool performLocalUpdate(const std::vector<ocpp::types::ocpp16::AuthorizationData>& authorization_datas);
+
   private:
     /** @brief Standard OCPP configuration */
     ocpp::config::IOcppConfig& m_ocpp_config;

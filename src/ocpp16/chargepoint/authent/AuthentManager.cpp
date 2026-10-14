@@ -283,7 +283,7 @@ std::vector<ocpp::types::ocpp16::AuthorizationData> AuthentManager::getLocalList
 /** @copydoc void IAuthentManager::updateLocalList(const std::vector<ocpp::types::ocpp16::AuthorizationData>&) */
 bool AuthentManager::updateLocalList(std::vector<ocpp::types::ocpp16::AuthorizationData> const &auth_data)
 {
-    return m_local_list.performPartialUpdate(auth_data);
+    return m_local_list.performLocalUpdate(auth_data);
 }
 } // namespace chargepoint
 } // namespace ocpp

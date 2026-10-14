@@ -75,8 +75,9 @@ class IAuthentManager
     virtual std::vector<ocpp::types::ocpp16::AuthorizationData> getLocalList() = 0;
 
     /**
-     * @brief Update the local list with a new list of tags
-     * @param auth_data List of all the tags in the local list
+     * @brief Update the local list from the charge point (e.g. maintenance), the list version is changed so that the
+     *        Central System sees the list isn't its own anymore (see AuthentLocalList::performLocalUpdate)
+     * @param auth_data Tags to add or update, or to delete (no IdTagInfo)
      * @return True if the update was successful, false otherwise
      */
     virtual bool updateLocalList(std::vector<ocpp::types::ocpp16::AuthorizationData> const &auth_data) = 0;

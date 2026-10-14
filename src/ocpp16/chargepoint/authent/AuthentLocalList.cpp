@@ -505,5 +505,26 @@ bool AuthentLocalList::performPartialUpdate(const std::vector<ocpp::types::ocpp1
     return ret;
 }
 
+/** @brief Update the local list from the charge point (not from the Central System) */
+bool AuthentLocalList::performLocalUpdate(const std::vector<ocpp::types::ocpp16::AuthorizationData>& authorization_datas)
+{
+    bool ret = performPartialUpdate(authorization_datas);
+
+    // The list isn't the one of the Central System anymore: version 0 means an empty list, otherwise the Central
+    // System sees a version it didn't send, and a differential update with this version is a mismatch
+    int const version = get().empty() ? 0 : (m_local_list_version + 1);
+    if (version != m_local_list_version)
+    {
+        m_local_list_version = version;
+        if (!m_internal_config.setKey(LOCAL_LIST_VERSION_KEY, std::to_string(m_local_list_version)))
+        {
+            LOG_ERROR << "Unable to save authent local list version";
+        }
+    }
+    LOG_INFO << "Local list updated by the charge point : listVersion = " << m_local_list_version;
+
+    return ret;
+}
+
 } // namespace chargepoint
 } // namespace ocpp
