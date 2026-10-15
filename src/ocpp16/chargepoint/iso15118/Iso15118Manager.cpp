@@ -286,6 +286,10 @@ void Iso15118Manager::handle(const ocpp::messages::ocpp16::CertificateSignedReq&
 {
     LOG_INFO << "[ISO15118] Certificate signed message received : certificate size = " << request.certificateChain.size();
 
+    // The CSMS answered the CSR: stop the retry timer now, the installation below can
+    // take longer than CertSigningWaitMinimum and a retry would send a stale CSR
+    m_csr_timer.stop();
+
     // Prepare response
     bool send_security_event = true;
     response.status          = CertificateSignedStatusEnumType::Rejected;
@@ -299,8 +303,6 @@ void Iso15118Manager::handle(const ocpp::messages::ocpp16::CertificateSignedReq&
             // Notify new certificate
             if (m_events_handler.iso15118ChargePointCertificateReceived(certificates))
             {
-                // Stop timeout timer
-                m_csr_timer.stop();
                 send_security_event = false;
                 response.status     = CertificateSignedStatusEnumType::Accepted;
             }
