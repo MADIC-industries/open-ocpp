@@ -28,38 +28,44 @@ along with OpenOCPP. If not, see <http://www.gnu.org/licenses/>.
 #include "openssl.h"
 // OpenSSL 3.x
 /** @brief Load private key from URI */
-int configure_ssl_context_with_private_key_from_uri(SSL_CTX *ctx, ocpp::websockets::IWebsocketServer::Credentials& creds)
+int configure_ssl_context_with_private_key_from_uri(SSL_CTX* ctx, ocpp::websockets::IWebsocketServer::Credentials& creds)
 {
     /* Try to load private key via provider URI (OpenSSL3 OSSL_STORE) */
-    EVP_PKEY *pkey = ocpp::x509::openssl::loadPrivateKeyFromStore(creds.server_certificate_private_key);
-    if (!pkey) {
+    EVP_PKEY* pkey = ocpp::x509::openssl::loadPrivateKeyFromStore(creds.server_certificate_private_key);
+    if (!pkey)
+    {
         return -1;
     }
 
     /* Make the key available to the SSL_CTX */
     /* SSL_CTX_use_PrivateKey accepts an EVP_PKEY and copies it internally */
-    if (SSL_CTX_use_PrivateKey(ctx, pkey) != 1) {
+    if (SSL_CTX_use_PrivateKey(ctx, pkey) != 1)
+    {
         ERR_print_errors_fp(stderr);
         EVP_PKEY_free(pkey);
         return -1;
     }
 
     /* Load certificate from PEM file (disk) */
-    if (SSL_CTX_use_certificate_chain_file(ctx, creds.server_certificate.c_str()) != 1) {
+    if (SSL_CTX_use_certificate_chain_file(ctx, creds.server_certificate.c_str()) != 1)
+    {
         ERR_print_errors_fp(stderr);
         EVP_PKEY_free(pkey);
         return 1;
     }
 
-    if (SSL_CTX_check_private_key(ctx) != 1) {
+    if (SSL_CTX_check_private_key(ctx) != 1)
+    {
         ERR_print_errors_fp(stderr);
         EVP_PKEY_free(pkey);
         return -1;
     }
 
-    if (!creds.server_certificate_ca.empty()) {
+    if (!creds.server_certificate_ca.empty())
+    {
         /* Load CA certificates for client certificate verification */
-        if (SSL_CTX_load_verify_locations(ctx, creds.server_certificate_ca.c_str(), nullptr) != 1) {
+        if (SSL_CTX_load_verify_locations(ctx, creds.server_certificate_ca.c_str(), nullptr) != 1)
+        {
             ERR_print_errors_fp(stderr);
             EVP_PKEY_free(pkey);
             return -1;
@@ -152,7 +158,7 @@ bool LibWebsocketServer::start(const std::string&        url,
             memset(&info, 0, sizeof info);
             info.options = LWS_SERVER_OPTION_DO_SSL_GLOBAL_INIT | LWS_SERVER_OPTION_SKIP_SERVER_CANONICAL_NAME |
                            LWS_SERVER_OPTION_HTTP_HEADERS_SECURITY_BEST_PRACTICES_ENFORCE;
-            info.log_cx = &m_logs_context;
+            info.log_cx  = &m_logs_context;
             if (m_url.port() != 0)
             {
                 info.port = static_cast<int>(m_url.port());
@@ -219,7 +225,8 @@ bool LibWebsocketServer::start(const std::string&        url,
                         if (ocpp::x509::openssl::isStoreUri(m_credentials.server_certificate_private_key))
                         {
                             info.options |= LWS_SERVER_OPTION_CREATE_VHOST_SSL_CTX;
-                        }else
+                        }
+                        else
 #endif // OPENSSL_VERSION_NUMBER
                         {
                             info.ssl_private_key_filepath = m_credentials.server_certificate_private_key.c_str();
@@ -376,8 +383,8 @@ int LibWebsocketServer::eventCallback(struct lws* wsi, enum lws_callback_reasons
             {
                 // Check URI
                 const size_t uri_size = lws_hdr_total_length(wsi, WSI_TOKEN_GET_URI) + 1;
-                char* uri     = new char[uri_size];
-                int   uri_len = lws_hdr_copy(wsi, uri, uri_size, WSI_TOKEN_GET_URI);
+                char*        uri      = new char[uri_size];
+                int          uri_len  = lws_hdr_copy(wsi, uri, uri_size, WSI_TOKEN_GET_URI);
                 if ((uri_len >= static_cast<int>(server->m_url.path().size())) &&
                     (strncmp(uri, server->m_url.path().c_str(), server->m_url.path().size()) == 0))
                 {
@@ -504,7 +511,7 @@ int LibWebsocketServer::eventCallback(struct lws* wsi, enum lws_callback_reasons
 
             // Notify connection
             const size_t uri_size = lws_hdr_total_length(wsi, WSI_TOKEN_GET_URI) + 1;
-            char* uri = new char[uri_size];
+            char*        uri      = new char[uri_size];
             if (lws_hdr_copy(wsi, uri, uri_size, WSI_TOKEN_GET_URI) <= 0)
             {
                 uri[0] = 0;
@@ -651,15 +658,21 @@ int LibWebsocketServer::eventCallback(struct lws* wsi, enum lws_callback_reasons
             }
         }
         break;
+        case LWS_CALLBACK_OPENSSL_PERFORM_CLIENT_CERT_VERIFICATION:
+            // libwebsockets ignores OpenSSL's verdict unless it is propagated: len = preverify_ok, 0 = accept
+            ret = (len != 0) ? 0 : 1;
+            break;
+
 #if (OPENSSL_VERSION_NUMBER >= 0x30000000L)
         case LWS_CALLBACK_OPENSSL_LOAD_EXTRA_SERVER_VERIFY_CERTS:
+        {
+            SSL_CTX* ctx = static_cast<SSL_CTX*>(user);
+            if (configure_ssl_context_with_private_key_from_uri(ctx, server->m_credentials) != 0)
             {
-                SSL_CTX *ctx = static_cast<SSL_CTX *>(user);
-                if (configure_ssl_context_with_private_key_from_uri(ctx, server->m_credentials) != 0) {
-                    ret = -1;
-                }
+                ret = -1;
             }
-            break;
+        }
+        break;
 #endif // OPENSSL_VERSION_NUMBER >= 0x30000000L
         default:
             break;
