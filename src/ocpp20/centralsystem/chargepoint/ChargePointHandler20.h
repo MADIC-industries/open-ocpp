@@ -26,6 +26,8 @@ along with OpenOCPP. If not, see <http://www.gnu.org/licenses/>.
 #include "DataTransfer20.h"
 #include "FirmwareStatusNotification20.h"
 #include "GenericMessageHandler.h"
+#include "Get15118EVCertificate20.h"
+#include "GetCertificateStatus20.h"
 #include "Heartbeat20.h"
 #include "LogStatusNotification20.h"
 #include "Logger.h"
@@ -81,6 +83,10 @@ class ChargePointHandler20
       public ocpp::messages::GenericMessageHandler<ocpp::messages::ocpp20::DataTransferReq, ocpp::messages::ocpp20::DataTransferConf>,
       public ocpp::messages::GenericMessageHandler<ocpp::messages::ocpp20::FirmwareStatusNotificationReq,
                                                    ocpp::messages::ocpp20::FirmwareStatusNotificationConf>,
+      public ocpp::messages::GenericMessageHandler<ocpp::messages::ocpp20::Get15118EVCertificateReq,
+                                                   ocpp::messages::ocpp20::Get15118EVCertificateConf>,
+      public ocpp::messages::GenericMessageHandler<ocpp::messages::ocpp20::GetCertificateStatusReq,
+                                                   ocpp::messages::ocpp20::GetCertificateStatusConf>,
       public ocpp::messages::GenericMessageHandler<ocpp::messages::ocpp20::HeartbeatReq, ocpp::messages::ocpp20::HeartbeatConf>,
       public ocpp::messages::GenericMessageHandler<ocpp::messages::ocpp20::LogStatusNotificationReq,
                                                    ocpp::messages::ocpp20::LogStatusNotificationConf>,
@@ -184,6 +190,24 @@ class ChargePointHandler20
                        ocpp::messages::ocpp20::FirmwareStatusNotificationConf&      response,
                        std::string&                                                 error_code,
                        std::string&                                                 error_message) override;
+    /** @copydoc bool GenericMessageHandler<RequestType, ResponseType>::handleMessage(const RequestType& request,
+     *                                                                                ResponseType& response,
+     *                                                                                std::string& error_code,
+     *                                                                                std::string& error_message)
+     */
+    bool handleMessage(const ocpp::messages::ocpp20::Get15118EVCertificateReq& request,
+                       ocpp::messages::ocpp20::Get15118EVCertificateConf&      response,
+                       std::string&                                            error_code,
+                       std::string&                                            error_message) override;
+    /** @copydoc bool GenericMessageHandler<RequestType, ResponseType>::handleMessage(const RequestType& request,
+     *                                                                                ResponseType& response,
+     *                                                                                std::string& error_code,
+     *                                                                                std::string& error_message)
+     */
+    bool handleMessage(const ocpp::messages::ocpp20::GetCertificateStatusReq& request,
+                       ocpp::messages::ocpp20::GetCertificateStatusConf&      response,
+                       std::string&                                           error_code,
+                       std::string&                                           error_message) override;
     /** @copydoc bool GenericMessageHandler<RequestType, ResponseType>::handleMessage(const RequestType& request,
      *                                                                                ResponseType& response,
      *                                                                                std::string& error_code,

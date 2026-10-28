@@ -47,6 +47,8 @@ ChargePointHandler20::ChargePointHandler20(const std::string&                   
       GenericMessageHandler<DataTransferReq, DataTransferConf>(DATATRANSFER_ACTION, messages_converter),
       GenericMessageHandler<FirmwareStatusNotificationReq, FirmwareStatusNotificationConf>(FIRMWARESTATUSNOTIFICATION_ACTION,
                                                                                            messages_converter),
+      GenericMessageHandler<Get15118EVCertificateReq, Get15118EVCertificateConf>(GET15118EVCERTIFICATE_ACTION, messages_converter),
+      GenericMessageHandler<GetCertificateStatusReq, GetCertificateStatusConf>(GETCERTIFICATESTATUS_ACTION, messages_converter),
       GenericMessageHandler<HeartbeatReq, HeartbeatConf>(HEARTBEAT_ACTION, messages_converter),
       GenericMessageHandler<LogStatusNotificationReq, LogStatusNotificationConf>(LOGSTATUSNOTIFICATION_ACTION, messages_converter),
       GenericMessageHandler<MeterValuesReq, MeterValuesConf>(METERVALUES_ACTION, messages_converter),
@@ -82,6 +84,10 @@ ChargePointHandler20::ChargePointHandler20(const std::string&                   
     msg_dispatcher.registerHandler(
         FIRMWARESTATUSNOTIFICATION_ACTION,
         *dynamic_cast<GenericMessageHandler<FirmwareStatusNotificationReq, FirmwareStatusNotificationConf>*>(this));
+    msg_dispatcher.registerHandler(GET15118EVCERTIFICATE_ACTION,
+                                   *dynamic_cast<GenericMessageHandler<Get15118EVCertificateReq, Get15118EVCertificateConf>*>(this));
+    msg_dispatcher.registerHandler(GETCERTIFICATESTATUS_ACTION,
+                                   *dynamic_cast<GenericMessageHandler<GetCertificateStatusReq, GetCertificateStatusConf>*>(this));
     msg_dispatcher.registerHandler(HEARTBEAT_ACTION, *dynamic_cast<GenericMessageHandler<HeartbeatReq, HeartbeatConf>*>(this));
     msg_dispatcher.registerHandler(LOGSTATUSNOTIFICATION_ACTION,
                                    *dynamic_cast<GenericMessageHandler<LogStatusNotificationReq, LogStatusNotificationConf>*>(this));
@@ -730,6 +736,62 @@ bool ChargePointHandler20::handleMessage(const ocpp::messages::ocpp20::SignCerti
         ret = m_handler->onSignCertificate(request, response, error_code, error_message);
 
         LOG_INFO << "[" << m_identifier << "] - SignCertificate handled";
+    }
+    else
+    {
+        error_code = ocpp::rpc::IRpc::RPC_ERROR_INTERNAL;
+    }
+
+    return ret;
+}
+/** @copydoc bool GenericMessageHandler<RequestType, ResponseType>::handleMessage(const RequestType& request,
+     *                                                                                ResponseType& response,
+     *                                                                                std::string& error_code,
+     *                                                                                std::string& error_message)
+     */
+bool ChargePointHandler20::handleMessage(const ocpp::messages::ocpp20::Get15118EVCertificateReq& request,
+                                         ocpp::messages::ocpp20::Get15118EVCertificateConf&      response,
+                                         std::string&                                            error_code,
+                                         std::string&                                            error_message)
+{
+    bool ret = false;
+
+    LOG_INFO << "[" << m_identifier << "] - Get15118EVCertificate requested";
+
+    // Notify request
+    if (m_handler)
+    {
+        ret = m_handler->onGet15118EVCertificate(request, response, error_code, error_message);
+
+        LOG_INFO << "[" << m_identifier << "] - Get15118EVCertificate handled";
+    }
+    else
+    {
+        error_code = ocpp::rpc::IRpc::RPC_ERROR_INTERNAL;
+    }
+
+    return ret;
+}
+/** @copydoc bool GenericMessageHandler<RequestType, ResponseType>::handleMessage(const RequestType& request,
+     *                                                                                ResponseType& response,
+     *                                                                                std::string& error_code,
+     *                                                                                std::string& error_message)
+     */
+bool ChargePointHandler20::handleMessage(const ocpp::messages::ocpp20::GetCertificateStatusReq& request,
+                                         ocpp::messages::ocpp20::GetCertificateStatusConf&      response,
+                                         std::string&                                           error_code,
+                                         std::string&                                           error_message)
+{
+    bool ret = false;
+
+    LOG_INFO << "[" << m_identifier << "] - GetCertificateStatus requested";
+
+    // Notify request
+    if (m_handler)
+    {
+        ret = m_handler->onGetCertificateStatus(request, response, error_code, error_message);
+
+        LOG_INFO << "[" << m_identifier << "] - GetCertificateStatus handled";
     }
     else
     {

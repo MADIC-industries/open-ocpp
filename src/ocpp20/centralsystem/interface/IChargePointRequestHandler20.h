@@ -26,7 +26,10 @@ along with OpenOCPP. If not, see <http://www.gnu.org/licenses/>.
 #include "CostUpdated20.h"
 #include "DataTransfer20.h"
 #include "FirmwareStatusNotification20.h"
+#include "Get15118EVCertificate20.h"
+#include "GetCertificateStatus20.h"
 #include "Heartbeat20.h"
+#include "IRpc.h"
 #include "LogStatusNotification20.h"
 #include "MeterValues20.h"
 #include "NotifyChargingLimit20.h"
@@ -135,6 +138,46 @@ class IChargePointRequestHandler20
                                               ocpp::messages::ocpp20::FirmwareStatusNotificationConf&      response,
                                               std::string&                                                 error,
                                               std::string&                                                 message) = 0;
+    /**
+     * @brief Called on reception of a Get15118EVCertificate request from the charge point
+     *        (default: NotImplemented CallError)
+     * @param request Request received
+     * @param response Response to send
+     * @param error Error (Empty if not a CallError)
+     * @param message Error message (Empty if not a CallError)
+     * @return true if the request has been handled and a response must be sent, false otherwise
+     */
+    virtual bool onGet15118EVCertificate(const ocpp::messages::ocpp20::Get15118EVCertificateReq& request,
+                                         ocpp::messages::ocpp20::Get15118EVCertificateConf&      response,
+                                         std::string&                                            error,
+                                         std::string&                                            message)
+    {
+        (void)request;
+        (void)response;
+        (void)message;
+        error = ocpp::rpc::IRpc::RPC_ERROR_NOT_IMPLEMENTED;
+        return false;
+    }
+    /**
+     * @brief Called on reception of a GetCertificateStatus request from the charge point
+     *        (default: NotImplemented CallError)
+     * @param request Request received
+     * @param response Response to send
+     * @param error Error (Empty if not a CallError)
+     * @param message Error message (Empty if not a CallError)
+     * @return true if the request has been handled and a response must be sent, false otherwise
+     */
+    virtual bool onGetCertificateStatus(const ocpp::messages::ocpp20::GetCertificateStatusReq& request,
+                                        ocpp::messages::ocpp20::GetCertificateStatusConf&      response,
+                                        std::string&                                           error,
+                                        std::string&                                           message)
+    {
+        (void)request;
+        (void)response;
+        (void)message;
+        error = ocpp::rpc::IRpc::RPC_ERROR_NOT_IMPLEMENTED;
+        return false;
+    }
     /**
      * @brief Called on reception of a Heartbeat request from the charge point
      * @param request Request received
