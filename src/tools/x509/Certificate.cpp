@@ -219,11 +219,14 @@ void Certificate::convertCertificateRequest(void* request, const void* issuer, v
     // Set version
     X509_set_version(cert, X509_REQ_get_version(cert_request));
 
-    // Set validity dates
-    ASN1_TIME* validity = ASN1_TIME_new();
-    ASN1_TIME_set(validity, time(nullptr));
+    // Set validity dates: the start is backdated so that a peer whose clock is slightly behind (no time
+    // synchronization yet, drift) doesn't reject the certificate as "not valid yet"
+    constexpr time_t NOT_BEFORE_MARGIN = 24 * 3600;
+    time_t const     now               = time(nullptr);
+    ASN1_TIME*       validity          = ASN1_TIME_new();
+    ASN1_TIME_set(validity, now - NOT_BEFORE_MARGIN);
     X509_set1_notBefore(cert, validity);
-    ASN1_TIME_set(validity, time(nullptr) + (days * 24 * 3600));
+    ASN1_TIME_set(validity, now + (days * 24 * 3600));
     X509_set1_notAfter(cert, validity);
     ASN1_TIME_free(validity);
 
