@@ -20,6 +20,7 @@ along with OpenOCPP. If not, see <http://www.gnu.org/licenses/>.
 #define OPENOCPP_REQUESTFIFO_H
 
 #include "Database.h"
+#include "IChargePointConfig.h"
 #include "IRequestFifo.h"
 
 #include <mutex>
@@ -35,7 +36,7 @@ class RequestFifo : public ocpp::messages::IRequestFifo
 {
   public:
     /** @brief Constructor */
-    RequestFifo(ocpp::database::Database& database);
+    RequestFifo(const ocpp::config::IChargePointConfig& stack_config, ocpp::database::Database& database);
 
     /** @brief Destructor */
     virtual ~RequestFifo();
@@ -65,6 +66,9 @@ class RequestFifo : public ocpp::messages::IRequestFifo
 
     // RequestFifo interface
 
+    /** @brief Remove all the requests (e.g. they were queued for another Central System) */
+    void clear();
+
   private:
     /** @brief FIFO entry */
     struct Entry
@@ -87,11 +91,15 @@ class RequestFifo : public ocpp::messages::IRequestFifo
         std::string request;
     };
 
+    /** @brief Stack configuration */
+    const ocpp::config::IChargePointConfig& m_stack_config;
     /** @brief Charge point's database */
     ocpp::database::Database& m_database;
 
     /** @brief Query to delete a request */
     std::unique_ptr<ocpp::database::Database::Query> m_delete_query;
+    /** @brief Query to delete all the requests */
+    std::unique_ptr<ocpp::database::Database::Query> m_clear_query;
     /** @brief Query to insert a request */
     std::unique_ptr<ocpp::database::Database::Query> m_insert_query;
 
@@ -101,12 +109,21 @@ class RequestFifo : public ocpp::messages::IRequestFifo
     std::queue<Entry> m_fifo;
     /** @brief Current id of the request */
     unsigned int m_id;
+    /** @brief Id of the request last returned by front() */
+    unsigned int m_front_id;
+    /** @brief A request has been returned by front() and not popped yet */
+    bool m_front_pending;
+    /** @brief The request last returned by front() has been dropped before being popped */
+    bool m_front_dropped;
 
     /** @brief Listener */
     IListener* m_listener;
 
     /** @brief Load requests from the database */
     void load();
+
+    /** @brief Drop the oldest requests above the maximum number of entries, return the number of dropped requests */
+    size_t dropOverflow();
 };
 
 } // namespace chargepoint

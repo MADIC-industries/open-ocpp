@@ -28,8 +28,19 @@ namespace chargepoint
 {
 
 /** @brief Constructor */
-RequestFifo::RequestFifo(ocpp::database::Database& database)
-    : m_database(database), m_delete_query(), m_insert_query(), m_mutex(), m_fifo(), m_id(0), m_listener(nullptr)
+RequestFifo::RequestFifo(const ocpp::config::IChargePointConfig& stack_config, ocpp::database::Database& database)
+    : m_stack_config(stack_config),
+      m_database(database),
+      m_delete_query(),
+      m_clear_query(),
+      m_insert_query(),
+      m_mutex(),
+      m_fifo(),
+      m_id(0),
+      m_front_id(0),
+      m_front_pending(false),
+      m_front_dropped(false),
+      m_listener(nullptr)
 {
 }
 
@@ -64,6 +75,13 @@ void RequestFifo::push(unsigned int connector_id, const std::string& action, con
     // Prepare for next entry
     m_id++;
 
+    // Limit the size of the FIFO
+    size_t dropped = dropOverflow();
+    if (dropped != 0)
+    {
+        LOG_WARNING << "Transaction related request FIFO : full, " << dropped << " oldest request(s) dropped";
+    }
+
     // Notify
     if (m_listener)
     {
@@ -83,6 +101,9 @@ bool RequestFifo::front(unsigned int& connector_id, std::string& action, rapidjs
         const std::string& request_str = m_fifo.front().request;
         action                         = m_fifo.front().action;
         connector_id                   = m_fifo.front().connector_id;
+        m_front_id                     = m_fifo.front().id;
+        m_front_pending                = true;
+        m_front_dropped                = false;
 
         // Deserialize request
         payload.Parse(request_str.c_str());
@@ -98,6 +119,18 @@ void RequestFifo::pop()
 {
     std::lock_guard<std::mutex> lock(m_mutex);
 
+    // The request returned by front() has already been dropped by the size limit
+    m_front_pending = false;
+    if (m_front_dropped)
+    {
+        m_front_dropped = false;
+        return;
+    }
+    if (m_fifo.empty())
+    {
+        return;
+    }
+
     LOG_DEBUG << "Transaction related request FIFO : poping " << m_fifo.front().action << " request";
 
     // Delete entry
@@ -108,6 +141,34 @@ void RequestFifo::pop()
         m_delete_query->bind(0, id);
         m_delete_query->exec();
         m_delete_query->reset();
+    }
+}
+
+/** @brief Remove all the requests */
+void RequestFifo::clear()
+{
+    std::lock_guard<std::mutex> lock(m_mutex);
+
+    LOG_INFO << "Transaction related request FIFO : " << m_fifo.size() << " request(s) cleared";
+
+    // The request being sent by the FIFO manager is removed too: its next pop() must not remove another request
+    if (m_front_pending)
+    {
+        m_front_pending = false;
+        m_front_dropped = true;
+    }
+    m_fifo = {};
+    if (m_clear_query)
+    {
+        m_clear_query->exec();
+        m_clear_query->reset();
+
+        // Give the freed space back to the file system
+        auto vacuum_query = m_database.query("VACUUM;");
+        if (vacuum_query)
+        {
+            vacuum_query->exec();
+        }
     }
 }
 
@@ -135,6 +196,7 @@ void RequestFifo::initDatabaseTable()
 
     // Create parametrized queries
     m_delete_query = m_database.query("DELETE FROM RequestFifo WHERE id=?;");
+    m_clear_query  = m_database.query("DELETE FROM RequestFifo WHERE TRUE;");
     m_insert_query = m_database.query("INSERT INTO RequestFifo VALUES (?, ?, ?, ?);");
 
     // Load data
@@ -173,7 +235,45 @@ void RequestFifo::load()
         }
     }
 
+    // Apply the size limit to the stored requests, and give the freed space back to the file system
+    size_t dropped = dropOverflow();
+    if (dropped != 0)
+    {
+        LOG_WARNING << "Transaction related request FIFO : " << dropped << " oldest stored request(s) dropped";
+        auto vacuum_query = m_database.query("VACUUM;");
+        if (vacuum_query)
+        {
+            vacuum_query->exec();
+        }
+    }
+
     LOG_INFO << "Transaction related request FIFO : " << m_fifo.size() << " message(s) pending";
+}
+
+/** @brief Drop the oldest requests above the maximum number of entries (m_mutex held, or initialization) */
+size_t RequestFifo::dropOverflow()
+{
+    size_t             dropped     = 0;
+    const unsigned int max_entries = m_stack_config.requestFifoMaxEntriesCount();
+    while ((max_entries != 0) && (m_fifo.size() > max_entries))
+    {
+        unsigned int id = m_fifo.front().id;
+        if (m_front_pending && (id == m_front_id))
+        {
+            // Being sent by the FIFO manager: its next pop() must not remove another request
+            m_front_pending = false;
+            m_front_dropped = true;
+        }
+        m_fifo.pop();
+        if (m_delete_query)
+        {
+            m_delete_query->bind(0, id);
+            m_delete_query->exec();
+            m_delete_query->reset();
+        }
+        dropped++;
+    }
+    return dropped;
 }
 
 } // namespace chargepoint

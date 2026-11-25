@@ -88,7 +88,7 @@ ChargePoint::ChargePoint(const ocpp::config::IChargePointConfig&          stack_
       m_internal_config(m_database),
       m_messages_converter(),
       m_messages_validator(),
-      m_requests_fifo(m_database),
+      m_requests_fifo(m_stack_config, m_database),
       m_security_manager(
           m_stack_config, m_ocpp_config, m_database, m_events_handler, *m_worker_pool.get(), m_messages_converter, m_requests_fifo, *this),
       m_reconnect_scheduled(false),
@@ -1388,6 +1388,12 @@ RequestFifoManager& ChargePoint::getRequestsFifoManager(void) const
         throw std::runtime_error("Stack is not started!");
     }
     return *m_requests_fifo_manager.get();
+}
+
+/** @brief Remove all the requests queued while offline */
+void ChargePoint::clearRequestsFifo(void)
+{
+    m_requests_fifo.clear();
 }
 
 /**
