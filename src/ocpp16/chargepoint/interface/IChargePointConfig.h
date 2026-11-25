@@ -118,6 +118,12 @@ class IChargePointConfig
     /** @brief Maximum number of entries in the log (0 = no logs in database) */
     virtual unsigned int logMaxEntriesCount() const = 0;
 
+    // Request FIFO
+
+    /** @brief Maximum number of transaction related requests kept while offline, the oldest ones are dropped
+     *         (0 = no limit) */
+    virtual unsigned int requestFifoMaxEntriesCount() const { return 0; }
+
     // Security
 
     /** @brief Enable internal certificate management : the certificates will be managed by Open OCPP only */

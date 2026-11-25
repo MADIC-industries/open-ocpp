@@ -432,6 +432,9 @@ class ChargePoint : public IChargePoint,
      */
     RequestFifoManager& getRequestsFifoManager(void) const;
 
+    /** @brief Remove all the requests queued while offline (e.g. they were queued for another Central System) */
+    void clearRequestsFifo(void);
+
     /**
      * @brief Get the iso15118 manager of the charge point
      * @return The iso15118 manager of the charge point
